@@ -196,7 +196,7 @@ if (DASH_DASH_ARGS.includes('comments') || DASH_DASH_ARGS.includes('all')) {
 
 async function handleStripe() {
     if (DASH_DASH_ARGS.includes('stripe') || DASH_DASH_ARGS.includes('all')) {
-        if (DASH_DASH_ARGS.includes('offline')) {
+        if (DASH_DASH_ARGS.includes('offline') || DASH_DASH_ARGS.includes('browser-tests')) {
             return;
         }
 
@@ -230,6 +230,10 @@ async function handleStripe() {
         console.log(`No commands provided`);
         process.exit(0);
     }
+
+    process.env.NX_DISABLE_DB = "true";
+    await exec("yarn nx reset --onlyDaemon");
+    await exec("yarn nx daemon --start");
 
     console.log(`Running projects: ${commands.map(c => chalk.green(c.name)).join(', ')}`);
 
