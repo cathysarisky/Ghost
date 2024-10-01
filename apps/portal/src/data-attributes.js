@@ -2,6 +2,7 @@
 import {getCheckoutSessionDataFromPlanAttribute, getUrlHistory} from './utils/helpers';
 import {HumanReadableError} from './utils/errors';
 
+
 export function formSubmitHandler({event, form, errorEl, siteUrl, submitHandler}) {
     const {t} = this.context;
     form.removeEventListener('submit', submitHandler);

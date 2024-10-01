@@ -8,6 +8,8 @@ import {HumanReadableError} from '../../utils/errors';
 import ActionButton from '../common/ActionButton';
 import CloseButton from '../common/CloseButton';
 import LoadingPage from './LoadingPage';
+import {useHumanReadableError} from '../../hooks/useHumanReadableError';
+
 
 export const FeedbackPageStyles = `
     .gh-portal-feedback {

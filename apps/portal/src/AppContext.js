@@ -10,6 +10,9 @@ const AppContext = React.createContext({
     pageData: {},
     onAction: (action, data) => {
         return {action, data};
+    },
+    t: (key) => {
+        return key;
     }
 });
 
