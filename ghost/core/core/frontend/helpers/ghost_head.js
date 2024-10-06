@@ -8,7 +8,6 @@ const {escapeExpression, SafeString} = require('../services/handlebars');
 // BAD REQUIRE
 // @TODO fix this require
 const cardAssetService = require('../services/card-assets');
-const excludeList = new Set();
 const logging = require('@tryghost/logging');
 const _ = require('lodash');
 const debug = require('@tryghost/debug')('ghost_head');
@@ -44,7 +43,7 @@ function finaliseStructuredData(meta) {
     return head;
 }
 
-function getMembersHelper(data, frontendKey) {
+function getMembersHelper(data, frontendKey, excludeList) {
     // Do not load Portal if both Memberships and Tips & Donations are disabled
     if (!settingsCache.get('members_enabled') && !settingsCache.get('donations_enabled')) {
         return '';
@@ -332,7 +331,7 @@ module.exports = async function ghost_head(options) { // eslint-disable-line cam
         }
         // no code injection for amp context!!!
         if (!_.includes(context, 'amp')) {
-            head.push(getMembersHelper(options.data, frontendKey)); // controlling for excludes within the function
+            head.push(getMembersHelper(options.data, frontendKey, excludeList)); // controlling for excludes within the function
             if (!excludeList.has('search')) {
                 head.push(getSearchHelper(frontendKey));
             }
