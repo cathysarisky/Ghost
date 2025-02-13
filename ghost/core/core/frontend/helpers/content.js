@@ -25,6 +25,8 @@ function restrictedCta(options) {
     });
 
     const data = createFrame(options.data);
+    console.log('Truncate options:', options.truncateOptions);
+    console.log('truncated?', downsize(this.html, options.truncateOptions) );
     return templates.execute('content-cta', this, {data});
 }
 
@@ -46,7 +48,7 @@ module.exports = function content(options = {}) {
     if (this.html === null) {
         this.html = '';
     }
-
+    options.truncateOptions = truncateOptions;
     if (!_.isUndefined(this.access) && !this.access) {
         return restrictedCta.apply(self, args);
     }
