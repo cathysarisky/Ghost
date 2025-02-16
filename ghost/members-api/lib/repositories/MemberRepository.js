@@ -471,6 +471,7 @@ module.exports = class MemberRepository {
             requiredRelations.push('newsletters');
         }
         if (needsProducts) {
+            console.log('need products? yes.')
             requiredRelations.push('products');
         }
 
@@ -501,6 +502,7 @@ module.exports = class MemberRepository {
         let productsToAdd = [];
         let productsToRemove = [];
         if (needsProducts) {
+            console.log('do comps need products?  yes, apparently')
             const existingProducts = initialMember.related('products').models;
             const existingProductIds = existingProducts.map(product => product.id);
             const incomingProductIds = data.products.map(product => product.id);
@@ -563,6 +565,7 @@ module.exports = class MemberRepository {
 
         for (const productId of productsToAdd) {
             const product = await this._productRepository.get({id: productId}, sharedOptions);
+            console.log('need to add product', product)
             if (!product) {
                 throw new errors.BadRequestError({
                     message: tpl(messages.productNotFound, {
@@ -614,6 +617,10 @@ module.exports = class MemberRepository {
                 archivedNewsletters.forEach(n => memberData.newsletters.push(n));
             }
         }
+        console.log('finally ready to edit the member, here are the variables:')
+        console.log('memberData', memberData)
+        console.log('memberStatusData', memberStatusData)
+        console.log('options', options)
 
         const member = await this._Member.edit({
             ...memberData,
@@ -621,6 +628,8 @@ module.exports = class MemberRepository {
         }, {...options, withRelated});
 
         for (const productToAdd of productsToAdd) {
+            console.log('productToAdd', productToAdd)
+            console.log('product to add options', options)
             await this._MemberProductEvent.add({
                 member_id: member.id,
                 product_id: productToAdd,

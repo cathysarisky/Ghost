@@ -6,7 +6,7 @@ const moment = require('moment');
 // where it left off on next run
 function cancel() {
     if (parentPort) {
-        parentPort.postMessage('Expired complimentary subscriptions cleanup cancelled before completion');
+        parentPort.postMessage('Expired token cleanup cancelled before completion');
         parentPort.postMessage('cancelled');
     } else {
         setTimeout(() => {

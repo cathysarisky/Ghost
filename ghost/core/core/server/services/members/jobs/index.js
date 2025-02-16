@@ -41,7 +41,7 @@ module.exports = {
             const h = Math.floor(Math.random() * 24); // 0-23
 
             jobsService.addJob({
-                at: `${s} ${m} ${h} * * *`, // Every day
+                at: `${s} * * * * *`, // Every day
                 job: require('path').resolve(__dirname, 'clean-tokens.js'),
                 name: 'clean-tokens'
             });

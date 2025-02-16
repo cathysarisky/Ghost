@@ -82,6 +82,7 @@ module.exports = class MemberBREADService {
                 } else {
                     startDate = moment(productAddEvent.created_at);
                 }
+                console.log('product is', product);
                 member.subscriptions.push({
                     id: '',
                     tier: product,
@@ -102,7 +103,7 @@ module.exports = class MemberBREADService {
                     default_payment_card_last4: '****',
                     cancel_at_period_end: false,
                     cancellation_reason: null,
-                    current_period_end: moment(product.expiry_at),
+                    current_period_end: moment(product.expiry_at).format('YYYY-MM-DD HH:mm:ss'),
                     price: {
                         id: '',
                         price_id: '',
@@ -273,7 +274,9 @@ module.exports = class MemberBREADService {
             if (attribution) {
                 data.attribution = attribution;
             }
+            console.log('getting model in BREAD');
             model = await this.memberRepository.create(data, options);
+            console.log('model is', model);
         } catch (error) {
             if (error.code && error.message.toLowerCase().indexOf('unique') !== -1) {
                 throw new errors.ValidationError({
@@ -319,6 +322,7 @@ module.exports = class MemberBREADService {
         }
 
         if (data.comped) {
+            console.log('comp member in BREAD');
             await this.memberRepository.setComplimentarySubscription(model, options);
         }
 
@@ -329,7 +333,8 @@ module.exports = class MemberBREADService {
         delete data.last_seen_at;
 
         let model;
-
+        console.log('edit was called with data', data);
+        console.log('edit was called, optionss are: ', options);
         try {
             // Update email_disabled based on whether the new email is suppressed
             if (data.email) {
@@ -338,6 +343,7 @@ module.exports = class MemberBREADService {
             }
 
             model = await this.memberRepository.update(data, options);
+            console.log('update called, model: ', model.clientData)
         } catch (error) {
             if (error.code && error.message.toLowerCase().indexOf('unique') !== -1) {
                 throw new errors.ValidationError({
@@ -355,6 +361,8 @@ module.exports = class MemberBREADService {
 
             if (typeof data.comped === 'boolean') {
                 if (data.comped && !hasCompedSubscription) {
+                    console.log('pass to setComplimentarySubscription options.context', options.context);
+                    console.log('pass to setComplimentarySubscription model', model);
                     await this.memberRepository.setComplimentarySubscription(model, {
                         context: options.context,
                         transacting: options.transacting

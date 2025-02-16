@@ -221,9 +221,12 @@ const Member = ghostBookshelf.Model.extend({
     },
 
     async updateTierExpiry(products = [], options = {}) {
+        console.log('updateTierExpiry');
         for (const product of products) {
             if (product?.id) {
-                const expiry = product.expiry_at ? new Date(product.expiry_at) : null;
+                console.log('updateTierExpiry', product.expiry_at);
+                const expiry = product.expiry_at ? new Date(product.expiry_at).toISOString().slice(0, 19).replace('T', ' ') : null;
+                console.log('rewrote ', product.expiry_at, ' to ', expiry);
                 const queryOptions = _.extend({}, options, {
                     query: {where: {product_id: product.id}}
                 });
