@@ -43,7 +43,7 @@ export const GlobalStyles = `
 
     html.dark {
         --black: #fff;
-        --blackrgb: 255,255,255;
+      /*  --blackrgb: 255,255,255; */
         --grey0: #fbfbfb;
         --grey1: #f9f9f9;
         --grey1rgb: 249,249,249;

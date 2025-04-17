@@ -22,7 +22,8 @@ function getSiteData() {
         const apiKey = scriptTag.dataset.key;
         const apiUrl = scriptTag.dataset.api;
         const locale = scriptTag.dataset.locale; // not providing a fallback here but will do it within the app.
-        const invertColor = scriptTag.dataset.invertColor;
+        const invertColor = scriptTag.dataset.invertcolor;
+        console.log('invertColor is', invertColor);
         return {siteUrl, apiKey, apiUrl, siteI18nEnabled, locale, invertColor};
     }
     return {};

@@ -61,6 +61,7 @@ export default class App extends React.Component {
             locale: props.locale,
             scrollbarWidth: 0,
             captchaRef: React.createRef(),
+            invertColor: '#999999'
         };
     }
 
