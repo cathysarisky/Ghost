@@ -128,7 +128,7 @@ export default class SigninPage extends React.Component {
                 <button
                     data-test-button='signup-switch'
                     className='gh-portal-btn gh-portal-btn-link'
-                    style={{color: brandColor}}
+                  //  style={{color: 'var(--brandColor)'}}
                     onClick={() => this.context.onAction('switchPage', {page: 'signup'})}
                 >
                     <span>{t('Sign up')}</span>

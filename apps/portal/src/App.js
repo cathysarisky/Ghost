@@ -60,7 +60,7 @@ export default class App extends React.Component {
             customSiteUrl: props.customSiteUrl,
             locale: props.locale,
             scrollbarWidth: 0,
-            captchaRef: React.createRef()
+            captchaRef: React.createRef(),
         };
     }
 
@@ -211,9 +211,9 @@ export default class App extends React.Component {
                 dir: i18n.dir() || 'ltr',
                 action: 'init:success',
                 initStatus: 'success',
-                locale: i18nLanguage
+                locale: i18nLanguage,
+                invertColor: this.props.invertColor || '#999'
             };
-
             this.handleSignupQuery({site, pageQuery, member});
 
             this.setState(state);
@@ -920,7 +920,21 @@ export default class App extends React.Component {
     /**Get Accent color from site data*/
     getAccentColor() {
         const {accent_color: accentColor} = this.state.site || {};
+
         return accentColor;
+    }
+
+    getInvertColor() {
+        const {accent_color: accentColor} = this.state.site || {};
+
+        if (!accentColor) {
+            return '#000';
+        }
+        const color = accentColor.replace('#', '');
+        const r = (255 - parseInt(color.substring(0, 2), 16)).toString(16).padStart(2, '0');
+        const g = (255 - parseInt(color.substring(2, 4), 16)).toString(16).padStart(2, '0');
+        const b = (255 - parseInt(color.substring(4, 6), 16)).toString(16).padStart(2, '0');
+        return `#${r}${g}${b}`;
     }
 
     /**Get final page set in App context from state data*/
@@ -960,7 +974,7 @@ export default class App extends React.Component {
 
     /**Get final App level context from App state*/
     getContextFromState() {
-        const {site, member, action, page, lastPage, showPopup, pageQuery, pageData, popupNotification, customSiteUrl, t, dir, scrollbarWidth, captchaRef} = this.state;
+        const {site, member, action, page, lastPage, showPopup, pageQuery, pageData, popupNotification, customSiteUrl, t, dir, scrollbarWidth, captchaRef, invertColor} = this.state;
         const contextPage = this.getContextPage({site, page, member});
         const contextMember = this.getContextMember({page: contextPage, member, customSiteUrl});
         return {
@@ -968,6 +982,7 @@ export default class App extends React.Component {
             site,
             action,
             brandColor: this.getAccentColor(),
+            invertColor: invertColor || this.getInvertColor(),
             page: contextPage,
             pageQuery,
             pageData,

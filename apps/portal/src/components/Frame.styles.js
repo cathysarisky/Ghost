@@ -146,6 +146,7 @@ const FrameStyles = `
 }
 
 .gh-portal-btn-link {
+    color: var(--invertcolor);
     line-height: 1;
     background: none;
     padding: 0;

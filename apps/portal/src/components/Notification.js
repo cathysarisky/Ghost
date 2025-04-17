@@ -239,6 +239,11 @@ export default class Notification extends React.Component {
     }
 
     render() {
+        let darkMode = false;
+        let pageBody = document.querySelector('body');
+        if (pageBody && pageBody.classList.contains('dark')) {
+            darkMode = true;
+        }
         const Style = Styles({brandColor: this.context.brandColor});
         const frameStyle = {
             ...Style.frame
@@ -249,7 +254,7 @@ export default class Notification extends React.Component {
         const {type, status, autoHide, duration} = this.state;
         if (type && status) {
             return (
-                <Frame style={frameStyle} title="portal-notification" head={this.renderFrameStyles()} className='gh-portal-notification-iframe' data-testid="portal-notification-frame" >
+                <Frame style={frameStyle} title="portal-notification" head={this.renderFrameStyles()} className='gh-portal-notification-iframe' data-testid="portal-notification-frame" dataDark={darkMode}>
                     <NotificationContent {...{type, status, autoHide, duration}} onHideNotification={e => this.onHideNotification(e)} />
                 </Frame>
             );

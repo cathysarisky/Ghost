@@ -662,7 +662,7 @@ class SignupPage extends React.Component {
     }
 
     renderLoginMessage() {
-        const {brandColor, onAction, t} = this.context;
+        const {brandColor, onAction, invertColor, t} = this.context;
         return (
             <div>
                 {this.renderFreeTrialMessage()}
@@ -672,7 +672,7 @@ class SignupPage extends React.Component {
                         data-test-button='signin-switch'
                         data-testid='signin-switch'
                         className='gh-portal-btn gh-portal-btn-link'
-                        style={{color: brandColor}}
+                    //    style={{color: 'var(--brand-color)'}}
                         onClick={() => onAction('switchPage', {page: 'signin'})}
                     >
                         <span>{t('Sign in')}</span>

@@ -20,6 +20,7 @@ export default class Frame extends Component {
             this.iframeHead = this.node.contentDocument.head;
             this.iframeRoot = this.node.contentDocument.body;
             this.iframeHtml.setAttribute('dir', this.props.dataDir);
+            this.iframeHtml.classList.add(this.props.dataDark ? 'dark' : 'light');
             this.forceUpdate();
         }
     }

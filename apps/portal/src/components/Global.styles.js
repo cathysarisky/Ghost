@@ -27,6 +27,11 @@ export const GlobalStyles = `
         --darkerRed: #C50202;
         --yellow: #FFDC15;
         --green: #30CF43;
+
+    }
+
+    html:not(.dark) {
+        --invertcolor: var(--brandcolor);
     }
 
     /* Globals
@@ -34,6 +39,31 @@ export const GlobalStyles = `
     html {
         font-size: 62.5%;
         height: 100%;
+    }
+
+    html.dark {
+        --black: #fff;
+        --blackrgb: 255,255,255;
+        --grey0: #fbfbfb;
+        --grey1: #f9f9f9;
+        --grey1rgb: 249,249,249;
+        --grey2: #eaeaea;
+        --grey3: #e1e1e1;
+        --grey4: #dcdcdc;
+        --grey5: #c5c5c5;
+        --grey6: #aeaeae;
+        --grey7: #979797;
+        --grey8: #7f7f7f;
+        --grey9: #686868;
+        --grey10: #515151;
+        --grey11: #474747;
+        --grey12: #3d3d3d;
+        --grey13: #333;
+        --grey13rgb: 33,33,33;
+        --grey14: #1d1d1d;
+        --white: #000;
+        --whitergb: 0,0,0;
+
     }
 
     body {
@@ -111,7 +141,7 @@ export const GlobalStyles = `
 
     p a {
         font-weight: 500;
-        color: var(--brandcolor);
+        color: var(--invertcolor);
         text-decoration: none;
     }
 

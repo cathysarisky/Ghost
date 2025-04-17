@@ -287,9 +287,11 @@ export default class PopupModal extends React.Component {
     renderFrameStyles() {
         const {site} = this.context;
         const FrameStyle = getFrameStyles({site});
+
         const styles = `
             :root {
-                --brandcolor: ${this.context.brandColor}
+                --brandcolor: ${this.context.brandColor};
+                --invertcolor: ${this.context.invertColor};
             }
         ` + FrameStyle;
         return (
@@ -301,10 +303,17 @@ export default class PopupModal extends React.Component {
     }
 
     renderFrameContainer() {
+        let darkMode = false;
+        console.log('renderFrameContainer triggered')
+        let pageBody = document.querySelector('body');
+        if (pageBody && pageBody.classList.contains('dark')) {
+            darkMode = true;
+            console.log('make it dark')
+        } else {console.log('light')}
         const {member, site, customSiteUrl} = this.context;
         const Styles = StylesWrapper({member});
         const isMobile = window.innerWidth < 480;
-
+        
         const frameStyle = {
             ...Styles.frame.common
         };
@@ -321,11 +330,10 @@ export default class PopupModal extends React.Component {
         if (hasMode(['dev'])) {
             className += ' dev';
         }
-
         return (
             <div style={Styles.modalContainer}>
                 <Frame style={frameStyle} title="portal-popup" head={this.renderFrameStyles()} dataTestId='portal-popup-frame'
-                    dataDir={this.context.dir}
+                    dataDir={this.context.dir} dataDark={darkMode}
                 >
                     <div className={className} onClick = {e => this.handlePopupClose(e)}></div>
                     <PopupContent isMobile={isMobile} />
