@@ -34,7 +34,7 @@
         "@tryghost/admin-x-framework": "0.0.0",
         "@tryghost/shade": "0.0.0",
         "@types/react": "18.3.20",
-        "@types/react-dom": "18.3.6",
+        "@types/react-dom": "18.3.7",
         "@types/react-svg-map": "2.1.4",
         "@vitejs/plugin-react": "4.4.1",
         "moment-timezone": "^0.5.48",
@@ -62,7 +62,7 @@
         }
     },
     "dependencies": {
-        "@radix-ui/react-form": "0.1.4",
+        "@radix-ui/react-form": "0.1.6",
         "@svg-maps/world": "1.0.1",
         "@tryghost/admin-x-framework": "0.0.0",
         "@tryghost/shade": "0.0.0",

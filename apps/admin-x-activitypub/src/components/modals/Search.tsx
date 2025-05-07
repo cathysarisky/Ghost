@@ -56,9 +56,9 @@ const AccountSearchResultItem: React.FC<AccountSearchResultItemProps & {
                 name: account.name,
                 handle: account.handle
             }}/>
-            <div className='flex flex-col'>
-                <span className='font-semibold text-black dark:text-white'>{account.name}</span>
-                <span className='text-sm text-gray-700 dark:text-gray-600'>{account.handle}</span>
+            <div className='flex flex-col break-anywhere'>
+                <span className='line-clamp-1 font-semibold text-black dark:text-white'>{account.name}</span>
+                <span className='line-clamp-1 text-sm text-gray-700 dark:text-gray-600'>{account.handle}</span>
             </div>
             <FollowButton
                 className='ml-auto'
@@ -139,7 +139,7 @@ const Search: React.FC<SearchProps> = ({onOpenChange, query, setQuery}) => {
                     clearBg
                     hideTitle
                     unstyled
-                    onChange={e => setQuery(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
                 />
             </div>
             <div className='min-h-[320px]'>

@@ -22,6 +22,12 @@ const Sidebar:React.FC = () => {
                     <LucideIcon.MousePointer size={16} strokeWidth={1.25} />
                     Web
                 </RightSidebarMenuLink>
+                <RightSidebarMenuLink active={location.pathname === `/analytics/${postId}/growth`} onClick={() => {
+                    navigate(`/analytics/${postId}/growth`);
+                }}>
+                    <LucideIcon.Sprout size={16} strokeWidth={1.25} />
+                Growth
+                </RightSidebarMenuLink>
             </RightSidebarMenu>
         </div>
     );

@@ -7,8 +7,9 @@ const Sidebar:React.FC = () => {
     const location = useLocation();
 
     return (
-        <div className='grow border-l py-8 pl-6 pr-0'>
-            <RightSidebarMenu className='sticky top-[134px]'>
+        <div className='grow border-l px-6 py-8'>
+            <RightSidebarMenu className='sticky top-[33px]'>
+                {/* <RightSidebarMenu className='sticky top-[134px]'> */}
                 <RightSidebarMenuLink active={location.pathname === '/' || location.pathname === '/web/'} onClick={() => {
                     navigate('/');
                 }}>
@@ -26,6 +27,13 @@ const Sidebar:React.FC = () => {
                 }}>
                     <LucideIcon.Earth size={16} strokeWidth={1.25} />
                 Locations
+                </RightSidebarMenuLink>
+
+                <RightSidebarMenuLink active={location.pathname === '/growth/'} onClick={() => {
+                    navigate('/growth/');
+                }}>
+                    <LucideIcon.Sprout size={16} strokeWidth={1.25} />
+                Growth
                 </RightSidebarMenuLink>
             </RightSidebarMenu>
         </div>

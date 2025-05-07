@@ -8,6 +8,7 @@ export type Activity = any;
 
 export interface Account {
     id: string;
+    apId: string;
     name: string;
     handle: string;
     bio: string;
@@ -21,7 +22,9 @@ export interface Account {
     followerCount: number;
     followsMe: boolean;
     followedByMe: boolean;
-    attachment: {name: string, value: string}[];
+    blockedByMe: boolean;
+    domainBlockedByMe: boolean;
+    attachment: { name: string; value: string }[];
 }
 
 export type AccountSearchResult = Pick<
@@ -94,7 +97,8 @@ export interface Notification {
         title: string | null;
         content: string;
         url: string;
-    }
+    },
+    createdAt: string;
 }
 
 export interface GetNotificationsResponse {
@@ -187,7 +191,52 @@ export class ActivityPubAPI {
         }
 
         const json = await response.json();
+
+        if (!response.ok) {
+            const error = {
+                message: json?.message || json?.error || 'Unexpected Error',
+                statusCode: response.status
+            };
+            throw error;
+        }
+
         return json;
+    }
+
+    async blockDomain(domain: URL): Promise<boolean> {
+        const url = new URL(
+            `.ghost/activitypub/actions/block/domain/${encodeURIComponent(domain.href)}`,
+            this.apiUrl
+        );
+        await this.fetchJSON(url, 'POST');
+        return true;
+    }
+
+    async unblockDomain(domain: URL): Promise<boolean> {
+        const url = new URL(
+            `.ghost/activitypub/actions/unblock/domain/${encodeURIComponent(domain.href)}`,
+            this.apiUrl
+        );
+        await this.fetchJSON(url, 'POST');
+        return true;
+    }
+
+    async block(id: URL): Promise<boolean> {
+        const url = new URL(
+            `.ghost/activitypub/actions/block/${encodeURIComponent(id.href)}`,
+            this.apiUrl
+        );
+        await this.fetchJSON(url, 'POST');
+        return true;
+    }
+
+    async unblock(id: URL): Promise<boolean> {
+        const url = new URL(
+            `.ghost/activitypub/actions/unblock/${encodeURIComponent(id.href)}`,
+            this.apiUrl
+        );
+        await this.fetchJSON(url, 'POST');
+        return true;
     }
 
     async follow(username: string): Promise<Actor> {
