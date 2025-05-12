@@ -17,10 +17,9 @@ import {
     PopoverTrigger,
     buttonVariants
 } from '@tryghost/shade';
-import {useFeatureFlags} from '@src/lib/feature-flags';
 
 interface ProfileMenuProps {
-    account: Account,
+    account?: Account,
     trigger: React.ReactNode;
     onCopyHandle: () => void;
     onBlockAccount: () => void;
@@ -40,7 +39,6 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
     isBlocked = false,
     isDomainBlocked = false
 }) => {
-    const {isEnabled} = useFeatureFlags();
     const [dialogType, setDialogType] = useState<'user' | 'domain' | null>(null);
     const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -59,8 +57,8 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
         onBlockDomain();
     };
 
-    const handle = account.handle;
-    const domain = handle.split('@').filter(Boolean)[1];
+    const handle = account?.handle;
+    const domain = handle?.split('@').filter(Boolean)[1];
 
     const renderBlockView = () => (
         <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -77,7 +75,7 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    {isEnabled('block-domain') && dialogType !== 'domain' &&
+                    {dialogType !== 'domain' &&
                         <Button className='-ml-3 mr-auto hover:bg-transparent hover:opacity-80' variant='ghost' onClick={(e) => {
                             e.stopPropagation();
                             setDialogType('domain');
@@ -98,7 +96,7 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
     );
 
     const renderUnblockView = () => (
-        <UnblockDialog
+        account && <UnblockDialog
             handle={account.handle}
             isDomainBlocked={account.domainBlockedByMe}
             isOpen={dialogOpen}
