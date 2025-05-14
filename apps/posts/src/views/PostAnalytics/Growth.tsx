@@ -1,55 +1,82 @@
-import DateRangeSelect from './components/DateRangeSelect';
-import KpiCard, {KpiCardIcon, KpiCardLabel, KpiCardValue} from './components/KpiCard';
+import KpiCard, {KpiCardContent, KpiCardIcon, KpiCardLabel, KpiCardValue} from './components/KpiCard';
 import PostAnalyticsContent from './components/PostAnalyticsContent';
 import PostAnalyticsHeader from './components/PostAnalyticsHeader';
 import PostAnalyticsLayout from './layout/PostAnalyticsLayout';
-import {Card, CardContent, CardDescription, CardHeader, CardTitle, LucideIcon, Separator, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, ViewHeader, ViewHeaderActions, formatNumber} from '@tryghost/shade';
+import {Card, CardContent, CardDescription, CardHeader, CardTitle, LucideIcon, Separator, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, ViewHeader, formatNumber} from '@tryghost/shade';
+import {SourceRow} from './components/Web/Sources';
 import {useParams} from '@tryghost/admin-x-framework';
 import {usePostReferrers} from '../../hooks/usePostReferrers';
-const STATS_DEFAULT_SOURCE_ICON_URL = 'https://static.ghost.org/v5.0.0/images/globe-icon.svg';
+
+const centsToDollars = (value : number) => {
+    return Math.round(value / 100);
+};
+
+// Check if the source has a valid URL that should be linked
+const hasLinkableUrl = (url: string | undefined): boolean => {
+    if (!url) {
+        return false;
+    }
+    
+    try {
+        new URL(url);
+        return true;
+    } catch (e) {
+        return false;
+    }
+};
 
 interface postAnalyticsProps {}
 
 const Growth: React.FC<postAnalyticsProps> = () => {
     // const {isLoading: isConfigLoading} = useGlobalData();
     const {postId} = useParams();
-    const {stats: postReferrers, isLoading} = usePostReferrers(postId || '');
-    // const {range} = useGlobalData();
+    const {stats: postReferrers, totals, isLoading} = usePostReferrers(postId || '');
 
     return (
         <PostAnalyticsLayout>
             <ViewHeader className='items-end pb-4'>
                 <PostAnalyticsHeader currentTab='Growth' />
-                <ViewHeaderActions className='mb-2'>
-                    <DateRangeSelect />
-                </ViewHeaderActions>
             </ViewHeader>
             <PostAnalyticsContent>
                 {isLoading ? 'Loading' :
                     <div className='flex flex-col items-stretch gap-6'>
-                        <div className='grid grid-cols-3 gap-6'>
-                            <KpiCard>
-                                <KpiCardIcon>
-                                    <LucideIcon.User strokeWidth={1.5} />
-                                </KpiCardIcon>
-                                <KpiCardLabel>Free members</KpiCardLabel>
-                                <KpiCardValue>{formatNumber(22)}</KpiCardValue>
-                            </KpiCard>
-                            <KpiCard>
-                                <KpiCardIcon>
-                                    <LucideIcon.Wallet strokeWidth={1.5} />
-                                </KpiCardIcon>
-                                <KpiCardLabel>Paid members</KpiCardLabel>
-                                <KpiCardValue>{formatNumber(8)}</KpiCardValue>
-                            </KpiCard>
-                            <KpiCard>
-                                <KpiCardIcon>
-                                    <LucideIcon.CircleDollarSign strokeWidth={1.5} />
-                                </KpiCardIcon>
-                                <KpiCardLabel>MRR</KpiCardLabel>
-                                <KpiCardValue>+${formatNumber(180)}</KpiCardValue>
-                            </KpiCard>
-                        </div>
+                        <Card>
+                            <CardHeader className='hidden'>
+                                <CardTitle>Newsletters</CardTitle>
+                                <CardDescription>How did this post perform</CardDescription>
+                            </CardHeader>
+                            <CardContent className='p-5'>
+                                <div className='grid grid-cols-3 gap-6'>
+                                    <KpiCard className='border-none p-0'>
+                                        <KpiCardIcon>
+                                            <LucideIcon.User strokeWidth={1.5} />
+                                        </KpiCardIcon>
+                                        <KpiCardContent>
+                                            <KpiCardLabel>Free members</KpiCardLabel>
+                                            <KpiCardValue>{formatNumber(totals?.free_members || 0)}</KpiCardValue>
+                                        </KpiCardContent>
+                                    </KpiCard>
+                                    <KpiCard className='border-none p-0'>
+                                        <KpiCardIcon>
+                                            <LucideIcon.WalletCards strokeWidth={1.5} />
+                                        </KpiCardIcon>
+                                        <KpiCardContent>
+                                            <KpiCardLabel>Paid members</KpiCardLabel>
+                                            <KpiCardValue>{formatNumber(totals?.paid_members || 0)}</KpiCardValue>
+                                        </KpiCardContent>
+                                    </KpiCard>
+                                    <KpiCard className='border-none p-0'>
+                                        <KpiCardIcon>
+                                            <LucideIcon.CircleDollarSign strokeWidth={1.5} />
+                                        </KpiCardIcon>
+                                        <KpiCardContent>
+                                            <KpiCardLabel>MRR</KpiCardLabel>
+                                            <KpiCardValue>+${centsToDollars(totals?.mrr || 0)}</KpiCardValue>
+                                        </KpiCardContent>
+                                    </KpiCard>
+                                </div>
+                            </CardContent>
+                        </Card>
                         <Card>
                             <CardHeader>
                                 <CardTitle>Sources</CardTitle>
@@ -57,36 +84,43 @@ const Growth: React.FC<postAnalyticsProps> = () => {
                             </CardHeader>
                             <CardContent>
                                 <Separator />
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Source</TableHead>
-                                            <TableHead className='w-[110px] text-right'>Free members</TableHead>
-                                            <TableHead className='w-[110px] text-right'>Paid members</TableHead>
-                                            <TableHead className='w-[110px] text-right'>MRR</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {postReferrers?.map(row => (
-                                            <TableRow key={row.source}>
-                                                <TableCell>
-                                                    <a className='inline-flex items-center gap-2 font-medium' href={`https://${row.source}`} rel="noreferrer" target='_blank'>
-                                                        <img
-                                                            className="size-4"
-                                                            src={`https://www.faviconextractor.com/favicon/${row.source || 'direct'}?larger=true`}
-                                                            onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                                                                e.currentTarget.src = STATS_DEFAULT_SOURCE_ICON_URL;
-                                                            }} />
-                                                        <span>{row.source || 'Direct'}</span>
-                                                    </a>
-                                                </TableCell>
-                                                <TableCell className='text-right font-mono text-sm'>+{formatNumber(row.free_members)}</TableCell>
-                                                <TableCell className='text-right font-mono text-sm'>+{formatNumber(row.paid_members)}</TableCell>
-                                                <TableCell className='text-right font-mono text-sm'>+${formatNumber(row.mrr)}</TableCell>
+                                {postReferrers.length > 0
+                                    ?
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Source</TableHead>
+                                                <TableHead className='w-[110px] text-right'>Free members</TableHead>
+                                                <TableHead className='w-[110px] text-right'>Paid members</TableHead>
+                                                <TableHead className='w-[110px] text-right'>MRR</TableHead>
                                             </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {postReferrers?.map(row => (
+                                                <TableRow key={row.source}>
+                                                    <TableCell>
+                                                        {row.source && row.referrer_url && hasLinkableUrl(row.referrer_url) ?
+                                                            <a className='group flex items-center gap-1' href={row.referrer_url} rel="noreferrer" target="_blank">
+                                                                <SourceRow className='group-hover:underline' source={row.source} />
+                                                            </a>
+                                                            :
+                                                            <span className='flex items-center gap-1'>
+                                                                <SourceRow source={row.source} />
+                                                            </span>
+                                                        }
+                                                    </TableCell>
+                                                    <TableCell className='text-right font-mono text-sm'>+{formatNumber(row.free_members)}</TableCell>
+                                                    <TableCell className='text-right font-mono text-sm'>+{formatNumber(row.paid_members)}</TableCell>
+                                                    <TableCell className='text-right font-mono text-sm'>+${centsToDollars(row.mrr)}</TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                    :
+                                    <div className='py-20 text-center text-sm text-gray-700'>
+                                    Once someone signs up on this post, sources will show here.
+                                    </div>
+                                }
                             </CardContent>
                         </Card>
                     </div>
