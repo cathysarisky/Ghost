@@ -115,7 +115,8 @@ function parseIgnores(ignoreFile) {
             assert(typeof ignore.comment === 'string', `Expected .overrides.${rule}[${index}].comment to be a String`);
             assert(ignore.comment, `Expected .overrides.${rule}[${index}].comment to contain a comment`);
 
-            response.set(`${rule}:${ignore.file}:${ignore.key}`, index);
+            const ignoreKey = `${rule}:${ignore.file}:${ignore.key}`;
+            response.set(ignoreKey, index);
         }
     }
 
@@ -158,13 +159,34 @@ class LinterContext {
     }
 
     /**
-     * @param {GhostI18nLintRule} rule
+     * @param {string} rule
      * @param {string} key
      */
     isIgnored(rule, key) {
         const ignoreKey = `${rule}:${this.relativeFilePath}:${key}`;
+        const isIgnored = this._ignoredRules.has(ignoreKey);
+        
+        // Only mark as "used" if this is an actual error check, not just a rule check
+        if (isIgnored) {
+            // For no-unused-variables, we need to check if the translation actually has an error
+            if (rule === 'ghost/i18n/no-unused-variables') {
+                // Don't mark as used yet - we'll do that in analyzeSingleTranslation when we know if there's an actual error
+            } else {
+                this._unusedIgnores.delete(ignoreKey);
+            }
+        }
+        
+        return isIgnored;
+    }
+
+    /**
+     * Mark an ignore as used when an actual error is found
+     * @param {string} rule
+     * @param {string} key
+     */
+    markIgnoreAsUsed(rule, key) {
+        const ignoreKey = `${rule}:${this.relativeFilePath}:${key}`;
         this._unusedIgnores.delete(ignoreKey);
-        return this._ignoredRules.has(ignoreKey);
     }
 
     /**
@@ -425,6 +447,7 @@ function analyzeSingleTranslation(key, translated, context) {
         }
     }
 
+    // DEBUG: Print when checking no-unused-variables and isIgnored result
     const reportUnusedVariables = !context.isIgnored('ghost/i18n/no-unused-variables', key);
     const reportUndefinedVariables = !context.isIgnored('ghost/i18n/no-undefined-variables', key);
 
@@ -433,18 +456,22 @@ function analyzeSingleTranslation(key, translated, context) {
     }
 
     for (const [define, columnInKey] of defines.entries()) {
-        // Use delete to remove the variable so `used` will only contain unused variables after this loop
-        if (!used.delete(define) && reportUnusedVariables) {
-            const rule = 'ghost/i18n/no-unused-variables';
-            const file = context.relativeFilePath;
-            const {line, column} = context.getPositionForText(key, 'key');
-            context.reportError(
-                `Translation does not use variable "${define}"`,
-                rule,
-                line,
-                column + columnInKey,
-                context.ignoreAll ? ignores => ignoreTranslationError(ignores, rule, file, key) : undefined
-            );
+        if (!used.delete(define)) {
+            // Mark the ignore as used since we found an actual error
+            context.markIgnoreAsUsed('ghost/i18n/no-unused-variables', key);
+            // Only report error if not ignored
+            if (!context.isIgnored('ghost/i18n/no-unused-variables', key)) {
+                const rule = 'ghost/i18n/no-unused-variables';
+                const file = context.relativeFilePath;
+                const {line, column} = context.getPositionForText(key, 'key');
+                context.reportError(
+                    `Translation does not use variable "${define}"`,
+                    rule,
+                    line,
+                    column + columnInKey,
+                    context.ignoreAll ? ignores => ignoreTranslationError(ignores, rule, file, key) : undefined
+                );
+            }
         }
     }
 
@@ -489,5 +516,6 @@ if (require.main === module) {
 }
 
 module.exports = {
-    analyze
+    analyze,
+    parseTranslationString
 };
