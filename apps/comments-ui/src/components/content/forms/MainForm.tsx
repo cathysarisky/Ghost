@@ -17,7 +17,7 @@ const MainForm: React.FC<Props> = ({commentsCount}) => {
     }), [commentsCount]);
 
     const {editor, hasContent} = useEditor(editorConfig);
-
+    const {member} = useAppContext();
     const submit = useCallback(async ({html}) => {
         // Send comment to server
         await dispatchAction('addComment', {
@@ -25,8 +25,28 @@ const MainForm: React.FC<Props> = ({commentsCount}) => {
             status: 'published',
             html
         });
+        // check if expertise should be updated
+        let rawExpertise = member?.expertise;
+        let booleanBadge = rawExpertise?.split('||')[0] === '1';
+        let textExpertise = rawExpertise?.split('||')[1] || '';
+        let hasPlusTier = false;
+        // check if the member has a plus tier subscription and add badge if they do
+        if (member && member.subscriptions && member.subscriptions.length > 0) {
+            hasPlusTier = member.subscriptions.some((subscription: any) => 
+                subscription.tier && 
+                (subscription.tier.name?.toLowerCase().includes('plus'))
+            );
 
+        }
+        if ((hasPlusTier && !booleanBadge) || (!hasPlusTier && booleanBadge)) {
+            rawExpertise = `${hasPlusTier ? '1' : '0'}||${textExpertise}`;
+        }
+        await dispatchAction('updateMember', {
+            expertise: rawExpertise,
+            name: member?.name
+        });
         editor?.commands.clearContent();
+
     }, [postId, dispatchAction, editor]);
 
     // C keyboard shortcut to focus main form

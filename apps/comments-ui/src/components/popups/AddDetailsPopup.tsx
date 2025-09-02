@@ -42,7 +42,7 @@ const AddDetailsPopup = (props: Props) => {
 
     const submit = async () => {
         // Check if the member has a plus tier subscription and add badge if they do
-        let finalExpertise = expertise;
+        let finalExpertise = '0||';
         if (member && member.subscriptions && member.subscriptions.length > 0) {
             // Check if any subscription has a tier that indicates plus membership
             const hasPlusTier = member.subscriptions.some((subscription: any) => 
@@ -50,12 +50,11 @@ const AddDetailsPopup = (props: Props) => {
                 (subscription.tier.name?.toLowerCase().includes('plus'))
             );
             if (hasPlusTier) {
-                finalExpertise = `1||${expertise}`;
+                finalExpertise = `1||${expertise || ''}`;
             } else {
-                finalExpertise = `0||${expertise}`;
+                finalExpertise = `0||${expertise || ''}`;
             }
         }
-
         if (name.trim() !== '') {
             await dispatchAction('updateMember', {
                 name,

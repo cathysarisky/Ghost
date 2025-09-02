@@ -265,8 +265,7 @@ const ReplyFormBox: React.FC<ReplyFormBoxProps> = ({comment, openForm}) => {
 const AuthorName: React.FC<{comment: Comment}> = ({comment}) => {
     const {t} = useAppContext();
     const name = getMemberNameFromComment(comment, t);
-    console.log('comment is ', comment);
-    const badge = comment.member?.expertise?.split('||')[0] === '1' ? <PlusBadge /> : null;
+    const badge = comment.member?.expertise?.split('||')[0] === '1' ? <PlusBadge /> : '';
     return (
         <h4 className="font-sans text-base font-bold leading-snug text-neutral-900 sm:text-sm dark:text-white/85">
             {name} {badge}
@@ -320,13 +319,11 @@ const CommentHeader: React.FC<CommentHeaderProps> = ({comment, className = ''}) 
     const createdAtRelative = useRelativeTime(comment.created_at);
     let memberExpertise = '';
     if (member && comment.member && comment.member.uuid === member.uuid) {
-        memberExpertise = member.expertise.split('||')[1];
+        memberExpertise = member.expertise.split('||')[1] || '';
     } else if (comment?.member?.expertise) {
-        memberExpertise = comment.member.expertise.split('||')[1];
+        memberExpertise = comment.member.expertise.split('||')[1] || '';
     }
-    if (!memberExpertise) {
-        return null;
-    }
+
     //const memberExpertise = member && comment.member && comment.member.uuid === member.uuid ? member.expertise : comment?.member?.expertise;
     const isReplyToReply = comment.in_reply_to_id && comment.in_reply_to_snippet;
 
