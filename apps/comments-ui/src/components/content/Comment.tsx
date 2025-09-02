@@ -10,6 +10,7 @@ import {Transition} from '@headlessui/react';
 import {findCommentById, formatExplicitTime, getCommentInReplyToSnippet, getMemberNameFromComment} from '../../utils/helpers';
 import {useCallback} from 'react';
 import {useRelativeTime} from '../../utils/hooks';
+import PlusBadge from './badge/PlusBadge';
 
 type AnimatedCommentProps = {
     comment: Comment;
@@ -204,8 +205,13 @@ const UnpublishedComment: React.FC<UnpublishedCommentProps> = ({comment, openEdi
 
 const MemberExpertise: React.FC<{comment: Comment}> = ({comment}) => {
     const {member} = useAppContext();
-    const memberExpertise = member && comment.member && comment.member.uuid === member.uuid ? member.expertise : comment?.member?.expertise;
-
+    //const memberExpertise = member && comment.member && comment.member.uuid === member.uuid ? member.expertise : comment?.member?.expertise;
+    let memberExpertise = '';
+    if (member && comment.member && comment.member.uuid === member.uuid) {
+        memberExpertise = member.expertise.split('||')[1];
+    } else if (comment?.member?.expertise) {
+        memberExpertise = comment.member.expertise.split('||')[1];
+    }
     if (!memberExpertise) {
         return null;
     }
@@ -259,9 +265,11 @@ const ReplyFormBox: React.FC<ReplyFormBoxProps> = ({comment, openForm}) => {
 const AuthorName: React.FC<{comment: Comment}> = ({comment}) => {
     const {t} = useAppContext();
     const name = getMemberNameFromComment(comment, t);
+    console.log('comment is ', comment);
+    const badge = comment.member?.expertise?.split('||')[0] === '1' ? <PlusBadge /> : null;
     return (
         <h4 className="font-sans text-base font-bold leading-snug text-neutral-900 sm:text-sm dark:text-white/85">
-            {name}
+            {name} {badge}
         </h4>
     );
 };
@@ -310,7 +318,16 @@ type CommentHeaderProps = {
 const CommentHeader: React.FC<CommentHeaderProps> = ({comment, className = ''}) => {
     const {member, t} = useAppContext();
     const createdAtRelative = useRelativeTime(comment.created_at);
-    const memberExpertise = member && comment.member && comment.member.uuid === member.uuid ? member.expertise : comment?.member?.expertise;
+    let memberExpertise = '';
+    if (member && comment.member && comment.member.uuid === member.uuid) {
+        memberExpertise = member.expertise.split('||')[1];
+    } else if (comment?.member?.expertise) {
+        memberExpertise = comment.member.expertise.split('||')[1];
+    }
+    if (!memberExpertise) {
+        return null;
+    }
+    //const memberExpertise = member && comment.member && comment.member.uuid === member.uuid ? member.expertise : comment?.member?.expertise;
     const isReplyToReply = comment.in_reply_to_id && comment.in_reply_to_snippet;
 
     return (
