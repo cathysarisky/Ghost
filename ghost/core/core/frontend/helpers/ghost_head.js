@@ -63,8 +63,7 @@ function getMembersHelper(data, frontendKey, excludeList) {
             ghost: urlUtils.getSiteUrl(),
             key: frontendKey,
             api: urlUtils.urlFor('api', {type: 'content'}, true),
-            locale: settingsCache.get('locale') || 'en',
-            'members-signin-otc': labs.isSet('membersSigninOTC') // html.dataset converts dash-attrs to camelCase
+            locale: settingsCache.get('locale') || 'en'
         };
         if (colorString) {
             attributes['accent-color'] = colorString;
@@ -335,6 +334,15 @@ module.exports = async function ghost_head(options) { // eslint-disable-line cam
             head.push(`<script defer src="${getAssetUrl('public/member-attribution.min.js')}"></script>`);
         }
 
+        // Use settingsHelpers to check if web analytics is enabled (includes all necessary checks)
+        if (settingsHelpers.isWebAnalyticsEnabled()) {
+            head.push(getTinybirdTrackerScript(dataRoot));
+            // Set a flag in response locals to indicate tracking script is being served
+            if (dataRoot._locals) {
+                dataRoot._locals.ghostAnalytics = true;
+            }
+        }
+
         if (options.data.site.accent_color) {
             const accentColor = escapeExpression(options.data.site.accent_color);
             const styleTag = `<style>:root {--ghost-accent-color: ${accentColor};}</style>`;
@@ -356,15 +364,6 @@ module.exports = async function ghost_head(options) { // eslint-disable-line cam
 
         if (!_.isEmpty(tagCodeInjection)) {
             head.push(tagCodeInjection);
-        }
-
-        // Use settingsHelpers to check if web analytics is enabled (includes all necessary checks)
-        if (settingsHelpers.isWebAnalyticsEnabled()) {
-            head.push(getTinybirdTrackerScript(dataRoot));
-            // Set a flag in response locals to indicate tracking script is being served
-            if (dataRoot._locals) {
-                dataRoot._locals.ghostAnalytics = true;
-            }
         }
 
         // Check if if the request is for a site preview, in which case we **always** use the custom font values

@@ -13,12 +13,17 @@ const messages = {
  */
 
 /**
+ * @typedef {Object} TokenValidateOptions
+ * @prop {string} [otcVerification] - "timestamp:hash" string used to verify an OTC-bound token
+ */
+
+/**
  * @template T
  * @template D
  * @typedef {Object} TokenProvider<T, D>
  * @prop {(data: D) => Promise<T>} create
- * @prop {(token: T) => Promise<D>} validate
- * @prop {(token: T) => Promise<string | null>} [getIdByToken]
+ * @prop {(token: T, options?: TokenValidateOptions) => Promise<D>} validate
+ * @prop {(token: T) => Promise<string | null>} [getRefByToken]
  * @prop {(otcRef: string, tokenValue: T) => string} [deriveOTC]
  */
 
@@ -32,7 +37,7 @@ class MagicLink {
      * @param {object} options
      * @param {MailTransporter} options.transporter
      * @param {TokenProvider<Token, TokenData>} options.tokenProvider
-     * @param {(token: Token, type: string, referrer?: string) => URL} options.getSigninURL
+     * @param {(token: Token, type: string, referrer?: string, otcVerification?: string) => URL} options.getSigninURL
      * @param {typeof defaultGetText} [options.getText]
      * @param {typeof defaultGetHTML} [options.getHTML]
      * @param {typeof defaultGetSubject} [options.getSubject]
@@ -80,7 +85,7 @@ class MagicLink {
         const url = this.getSigninURL(token, type, options.referrer);
 
         let otc = null;
-        if (this.labsService?.isSet('membersSigninOTC') && options.includeOTC) {
+        if (options.includeOTC) {
             try {
                 otc = await this.getOTCFromToken(token);
             } catch (err) {
@@ -101,9 +106,9 @@ class MagicLink {
         // this if we've successfully generated an OTC to avoid clients showing
         // a token input field when the email doesn't contain an OTC
         let otcRef = null;
-        if (this.labsService?.isSet('membersSigninOTC') && otc) {
+        if (otc) {
             try {
-                otcRef = await this.getIdFromToken(token);
+                otcRef = await this.getRefFromToken(token);
             } catch (err) {
                 this.sentry?.captureException?.(err);
                 otcRef = null;
@@ -130,17 +135,17 @@ class MagicLink {
     }
 
     /**
-     * getIdFromToken
+     * getRefFromToken
      *
-     * @param {Token} token - The token to get the id from
-     * @returns {Promise<string|null>} id - The id of the token
+     * @param {Token} token - The token to get the ref from
+     * @returns {Promise<string|null>} ref - The ref of the token
      */
-    async getIdFromToken(token) {
-        if (typeof this.tokenProvider.getIdByToken !== 'function') {
+    async getRefFromToken(token) {
+        if (typeof this.tokenProvider.getRefByToken !== 'function') {
             return null;
         }
 
-        const id = await this.tokenProvider.getIdByToken(token);
+        const id = await this.tokenProvider.getRefByToken(token);
         return id;
     }
 
@@ -151,7 +156,7 @@ class MagicLink {
      * @returns {Promise<string|null>} otc - The otc of the token
      */
     async getOTCFromToken(token) {
-        const tokenId = await this.getIdFromToken(token);
+        const tokenId = await this.getRefFromToken(token);
 
         if (!tokenId || typeof this.tokenProvider.deriveOTC !== 'function') {
             return null;
@@ -165,10 +170,11 @@ class MagicLink {
      * getDataFromToken
      *
      * @param {Token} token - The token to decode
+     * @param {string} [otcVerification] - Optional "timestamp:hash" to bind token usage to an OTC verification window
      * @returns {Promise<TokenData>} data - The data object associated with the magic link
      */
-    async getDataFromToken(token) {
-        const tokenData = await this.tokenProvider.validate(token);
+    async getDataFromToken(token, otcVerification) {
+        const tokenData = await this.tokenProvider.validate(token, {otcVerification});
         return tokenData;
     }
 }
@@ -237,4 +243,3 @@ function defaultGetSubject(type, otc) {
 }
 
 module.exports = MagicLink;
-module.exports.JWTTokenProvider = require('./JWTTokenProvider');
