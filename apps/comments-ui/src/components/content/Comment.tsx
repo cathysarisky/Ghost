@@ -267,7 +267,7 @@ const AuthorName: React.FC<{comment: Comment}> = ({comment}) => {
     const name = getMemberNameFromComment(comment, t);
     const badge = comment.member?.expertise?.split('||')[0] === '1' ? <PlusBadge /> : '';
     return (
-        <h4 className="font-sans text-base font-bold leading-snug text-neutral-900 sm:text-sm dark:text-white/85">
+        <h4 className="font-sans text-base font-bold leading-snug text-neutral-900 sm:text-sm dark:text-white/85 flex">
             {name} {badge}
         </h4>
     );
