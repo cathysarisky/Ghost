@@ -99,9 +99,9 @@ const AddDetailsPopup = (props: Props) => {
                     appear
                 >
                     <div className="flex flex-row items-center justify-start gap-3 pr-4">
-                        <div className="h-10 w-10 rounded-full border-2 border-white bg-cover bg-no-repeat" style={{backgroundImage: `url(${profile.avatar})`}} />
-                        <div className="flex flex-col items-start justify-center">
-                            <div className="font-sans text-base font-semibold tracking-tight text-white">
+                        <div className="h-10 w-10 rounded-full border-2 border-white bg-cover bg-no-repeat flex-none bg-[#0C313B]" style={{backgroundImage: `url(${profile.avatar})`}} />
+                        <div className="flex flex-col items-start justify-center min-w-0">
+                            <div className="font-sans text-base font-semibold tracking-tight text-white flex">
                                 {profile.name} {profile.isPlus && <PlusBadge />}
                             </div>
                             <div className="font-sans text-sm tracking-tight text-neutral-400">
@@ -117,10 +117,10 @@ const AddDetailsPopup = (props: Props) => {
 
         // using URLS over real images for avatars as serving JPG images was not optimal (based on discussion with team)
         const exampleProfiles = [
-            {avatar: 'https://randomuser.me/api/portraits/men/90.jpg', name: t('person1name'), expertise: t('person1expertise'), isPlus: true},
-            {avatar: 'https://randomuser.me/api/portraits/women/17.jpg', name: t('person2name'), expertise: t('person2expertise'), isPlus: false},
-            {avatar: 'https://randomuser.me/api/portraits/women/2.jpg', name: t('person3name'), expertise: t('person3expertise'), isPlus: true},
-            {avatar: 'https://randomuser.me/api/portraits/men/92.jpg', name: t('person4name'), expertise: t('person4expertise'), isPlus: false}
+            {avatar: '/assets/images/person1.png', name: t('person1name'), expertise: t('person1expertise'), isPlus: true},
+            {avatar: '/assets/images/person2.png', name: t('person2name'), expertise: t('person2expertise'), isPlus: false},
+            {avatar: '/assets/images/person3.png', name: t('person3name'), expertise: t('person3expertise'), isPlus: true},
+            {avatar: '/assets/images/person4.png', name: t('person4name'), expertise: t('person4expertise'), isPlus: false}
         ];
 
         for (let i = 0; i < exampleProfiles.length; i++) {
@@ -211,7 +211,7 @@ const AddDetailsPopup = (props: Props) => {
                         <button
                             className={`text-md mt-10 flex h-[42px] w-full items-center justify-center rounded-md px-8 font-sans font-semibold text-white opacity-100 transition-opacity duration-200 ease-linear hover:opacity-90`}
                             data-testid="save-button"
-                            style={{backgroundColor: accentColor ?? '#000000'}}
+                            style={{backgroundColor: '#29A6C9'}}
                             type="button"
                             onClick={() => {
                                 // eslint-disable-next-line no-console

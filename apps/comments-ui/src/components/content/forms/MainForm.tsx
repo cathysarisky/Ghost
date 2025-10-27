@@ -34,7 +34,7 @@ const MainForm: React.FC<Props> = ({commentsCount}) => {
         if (member && member.subscriptions && member.subscriptions.length > 0) {
             hasPlusTier = member.subscriptions.some((subscription: any) => 
                 subscription.tier && 
-                (subscription.tier.name?.toLowerCase().includes('plus'))
+                (subscription.tier.name?.toLowerCase().includes('守護'))
             );
 
         }

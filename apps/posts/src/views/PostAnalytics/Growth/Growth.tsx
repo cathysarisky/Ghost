@@ -26,13 +26,11 @@ const Growth: React.FC<postAnalyticsProps> = () => {
     const siteUrl = globalData?.url as string | undefined;
     const siteIcon = globalData?.icon as string | undefined;
 
-    // TEMPORARY: For testing levernews.com direct traffic grouping
-    // Remove this line when done testing
-    const testingSiteUrl = siteUrl || 'https://levernews.com';
-
     let containerClass = 'flex flex-col items-stretch gap-8';
+    let cardClass = '';
     if (!appSettings?.paidMembersEnabled) {
-        containerClass = 'grid grid-cols-2 gap-8';
+        containerClass = 'grid grid-cols-1 border rounded-md';
+        cardClass = 'border-none hover:shadow-none';
     }
 
     return (
@@ -41,7 +39,7 @@ const Growth: React.FC<postAnalyticsProps> = () => {
             <PostAnalyticsContent>
                 {isLoading ?
                     <div className={containerClass}>
-                        <Card>
+                        <Card className={cardClass}>
                             <CardContent className='grid grid-cols-3 p-0'>
                                 {Array.from({length: 3}, (_, i) => (
                                     <div key={i} className='h-[98px] gap-1 border-r px-6 py-5 last:border-r-0'>
@@ -52,7 +50,7 @@ const Growth: React.FC<postAnalyticsProps> = () => {
 
                             </CardContent>
                         </Card>
-                        <Card>
+                        <Card className={cardClass}>
                             <CardHeader>
                                 <CardTitle>Top sources</CardTitle>
                                 <CardDescription>Where did your growth come from?</CardDescription>
@@ -65,7 +63,7 @@ const Growth: React.FC<postAnalyticsProps> = () => {
                     </div>
                     :
                     <div className={containerClass}>
-                        <Card data-testid='members-card'>
+                        <Card className={cardClass} data-testid='members-card'>
                             <CardHeader className='hidden'>
                                 <CardTitle>Newsletters</CardTitle>
                                 <CardDescription>How did this post perform</CardDescription>
@@ -124,11 +122,13 @@ const Growth: React.FC<postAnalyticsProps> = () => {
                                 </div>
                             </CardContent>
                         </Card>
+                        {!appSettings?.paidMembersEnabled && <Separator />}
                         <GrowthSources
+                            className={cardClass}
                             data={postReferrers}
                             mode="growth"
                             siteIcon={siteIcon}
-                            siteUrl={testingSiteUrl}
+                            siteUrl={siteUrl}
                         />
                     </div>
                 }

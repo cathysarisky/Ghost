@@ -6,18 +6,19 @@ type Props = {
     isPaid: boolean
 };
 const CTABox: React.FC<Props> = ({isFirst, isPaid}) => {
-    const {accentColor, publication, member, t, commentCount, institutional} = useAppContext();
 
+    const {publication, member, t, commentCount, institutional} = useAppContext();
+        
     if (institutional) {
         return null;
     }
 
     const buttonStyle = {
-        backgroundColor: accentColor
+        backgroundColor: "#29A6C9"
     };
 
     const linkStyle = {
-        color: accentColor
+        color: "#29A6C9"
     };
 
     const titleText = (commentCount === 0 ? t('Start the conversation') : t('Join the discussion'));
