@@ -8,7 +8,7 @@ type Props = {
 };
 
 const ReplyButton: React.FC<Props> = ({disabled, isReplying, openReplyForm}) => {
-    const {member, t, dispatchAction, commentsEnabled} = useAppContext();
+    const {member, t, dispatchAction, commentsEnabled, institutional} = useAppContext();
 
     const paidOnly = commentsEnabled === 'paid';
     const isPaidMember = member && !!member.paid;
@@ -23,6 +23,10 @@ const ReplyButton: React.FC<Props> = ({disabled, isReplying, openReplyForm}) => 
         }
         openReplyForm();
     };
+
+    if (institutional) {
+        return null;
+    }
 
     return (
         <button

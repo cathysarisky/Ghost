@@ -20,8 +20,9 @@ export function useOptions(scriptTag: HTMLElement) {
         const showCount = dataset.count === 'true';
         const publication = dataset.publication ?? ''; // TODO: replace with dynamic data from script
         const locale = dataset.locale ?? 'en';
+        const institutional = dataset.institutional === 'true' ;
 
-        const options = {locale, siteUrl, apiKey, apiUrl, postId, adminUrl, colorScheme, avatarSaturation, accentColor, commentsEnabled, title, showCount, publication};
+        const options = {locale, siteUrl, apiKey, apiUrl, postId, adminUrl, colorScheme, avatarSaturation, accentColor, commentsEnabled, title, showCount, publication, institutional};
         return options;
     }, [scriptTag]);
 

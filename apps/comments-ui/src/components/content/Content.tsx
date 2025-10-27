@@ -10,7 +10,7 @@ import {useEffect} from 'react';
 
 const Content = () => {
     const labs = useLabs();
-    const {pagination, member, comments, commentCount, commentsEnabled, title, showCount, commentsIsLoading, t} = useAppContext();
+    const {pagination, member, comments, commentCount, commentsEnabled, title, showCount, commentsIsLoading, t, institutional} = useAppContext();
 
     useEffect(() => {
         const elem = document.getElementById(ROOT_DIV_ID);
@@ -40,7 +40,7 @@ const Content = () => {
         <>
             <ContentTitle count={commentCount} showCount={showCount} title={title}/>
             <div>
-                {(member && (isPaidMember || !isPaidOnly)) ? (
+                {(member && (isPaidMember || !isPaidOnly) && !institutional) ? (
                     <MainForm commentsCount={comments.length} />
                 ) : (
                     <section className="flex flex-col items-center py-6 sm:px-8 sm:py-10" data-testid="cta-box">

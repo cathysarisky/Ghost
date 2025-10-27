@@ -62,7 +62,8 @@ export type CommentsOptions = {
     commentsEnabled: string | undefined,
     title: string | null,
     showCount: boolean,
-    publication: string
+    publication: string,
+    institutional: boolean
 };
 
 export type EditableAppContext = {
