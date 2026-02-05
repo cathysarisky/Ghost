@@ -1,10 +1,10 @@
-const should = require('should');
 const sinon = require('sinon');
+const {assertMatchSnapshot} = require('../../utils/assertions');
 const {agentProvider, fixtureManager, mockManager, matchers} = require('../../utils/e2e-framework');
 const {anyArray, anyContentVersion, anyEtag, anyErrorId, anyLocationFor, anyObject, anyObjectId, anyISODateTime, anyString, anyStringNumber, anyUuid, stringMatching} = matchers;
 const config = require('../../../core/shared/config');
 const models = require('../../../core/server/models');
-const urlUtilsHelper = require('../../utils/urlUtils');
+const urlUtilsHelper = require('../../utils/url-utils');
 const escapeRegExp = require('lodash/escapeRegExp');
 const {mobiledocToLexical} = require('@tryghost/kg-converters');
 
@@ -37,7 +37,7 @@ function testCleanedSnapshot(text, ignoreReplacements) {
             text = text.replace(new RegExp(escapeRegExp(match), 'g'), replacement);
         }
     }
-    should({text}).matchSnapshot();
+    assertMatchSnapshot({text});
 }
 
 const createLexical = (text) => {

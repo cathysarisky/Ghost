@@ -3,20 +3,21 @@
 // Mocking out the models to not touch the DB would turn these into unit tests, and should probably be done in future,
 // But then again testing real code, rather than mock code, might be more useful...
 
+const assert = require('node:assert/strict');
 const should = require('should');
 const path = require('path');
 const fs = require('fs');
 
 const supertest = require('supertest');
 const testUtils = require('../utils');
-const configUtils = require('../utils/configUtils');
-const urlUtils = require('../utils/urlUtils');
+const configUtils = require('../utils/config-utils');
+const urlUtils = require('../utils/url-utils');
 const adminUtils = require('../utils/admin-utils');
 const config = require('../../core/shared/config');
 let request;
 
 function assertCorrectHeaders(res) {
-    should.not.exist(res.headers['x-cache-invalidate']);
+    assert.equal(res.headers['x-cache-invalidate'], undefined);
     should.exist(res.headers.date);
 }
 

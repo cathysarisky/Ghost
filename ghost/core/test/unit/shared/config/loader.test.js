@@ -1,8 +1,9 @@
+const assert = require('node:assert/strict');
 const should = require('should');
 const path = require('path');
 const rewire = require('rewire');
 const _ = require('lodash');
-const configUtils = require('../../../utils/configUtils');
+const configUtils = require('../../../utils/config-utils');
 const sinon = require('sinon');
 const localUtils = require('../../../../core/shared/config/utils');
 describe('Config Loader', function () {
@@ -95,7 +96,7 @@ describe('Config Loader', function () {
             });
 
             customConfig.get('site_uuid').should.eql('a58fe20c-0af0-4fc6-9b1a-20873d5b7d03');
-            should.not.exist(customConfig.get('commented'));
+            assert.equal(customConfig.get('commented'), undefined);
         });
     });
 

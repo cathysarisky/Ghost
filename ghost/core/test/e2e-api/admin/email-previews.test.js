@@ -1,12 +1,12 @@
 const {agentProvider, fixtureManager, matchers, mockManager} = require('../../utils/e2e-framework');
 const {anyEtag, anyErrorId, anyContentVersion, anyString} = matchers;
 const assert = require('assert/strict');
+const {assertMatchSnapshot} = require('../../utils/assertions');
 const config = require('../../../core/shared/config');
 const sinon = require('sinon');
 const escapeRegExp = require('lodash/escapeRegExp');
-const should = require('should');
 const settingsHelpers = require('../../../core/server/services/settings-helpers');
-const urlUtilsHelper = require('../../utils/urlUtils');
+const urlUtilsHelper = require('../../utils/url-utils');
 
 // @TODO: factor out these requires
 const ObjectId = require('bson-objectid').default;
@@ -18,7 +18,7 @@ function testCleanedSnapshot(html, cleaned) {
     for (const [key, value] of Object.entries(cleaned)) {
         html = html.replace(new RegExp(escapeRegExp(key), 'g'), value);
     }
-    should({html}).matchSnapshot();
+    assertMatchSnapshot({html});
 }
 
 const matchEmailPreviewBody = {
@@ -41,6 +41,8 @@ describe('Email Preview API', function () {
     beforeEach(function () {
         mockManager.mockMailgun();
         sinon.stub(settingsHelpers, 'getMembersValidationKey').returns('test-validation-key');
+        // Stub Date.getFullYear to return a fixed year for consistent snapshots
+        sinon.stub(Date.prototype, 'getFullYear').returns(2025);
     });
 
     before(async function () {

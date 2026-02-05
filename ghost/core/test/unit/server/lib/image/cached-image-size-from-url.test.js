@@ -1,7 +1,8 @@
+const assert = require('node:assert/strict');
 const errors = require('@tryghost/errors');
 const should = require('should');
 const sinon = require('sinon');
-const CachedImageSizeFromUrl = require('../../../../../core/server/lib/image/CachedImageSizeFromUrl');
+const CachedImageSizeFromUrl = require('../../../../../core/server/lib/image/cached-image-size-from-url');
 const InMemoryCache = require('../../../../../core/server/adapters/cache/MemoryCache');
 const logging = require('@tryghost/logging');
 
@@ -76,9 +77,9 @@ describe('lib/image: image size cache', function () {
 
         cacheStore.get(url).should.not.be.undefined;
         const image = cacheStore.get(url);
-        should.equal(image.url, 'http://mysite.com/content/image/mypostcoverimage.jpg');
-        should.not.exist(image.width);
-        should.not.exist(image.height);
+        assert.equal(image.url, 'http://mysite.com/content/image/mypostcoverimage.jpg');
+        assert.equal(image.width, undefined);
+        assert.equal(image.height, undefined);
         sinon.assert.calledOnce(loggingStub);
     });
 
@@ -97,9 +98,9 @@ describe('lib/image: image size cache', function () {
 
         cacheStore.get(url).should.not.be.undefined;
         const image = cacheStore.get(url);
-        should.equal(image.url, 'http://mysite.com/content/image/mypostcoverimage.jpg');
-        should.not.exist(image.width);
-        should.not.exist(image.height);
+        assert.equal(image.url, 'http://mysite.com/content/image/mypostcoverimage.jpg');
+        assert.equal(image.width, undefined);
+        assert.equal(image.height, undefined);
     });
 
     it('should return null if url is null', async function () {
@@ -112,6 +113,6 @@ describe('lib/image: image size cache', function () {
 
         result = await cachedImageSizeFromUrl.getCachedImageSizeFromUrl(url);
 
-        should.not.exist(result);
+        assert.equal(result, undefined);
     });
 });

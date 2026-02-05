@@ -1,3 +1,4 @@
+const assert = require('node:assert/strict');
 const should = require('should');
 const sinon = require('sinon');
 const errors = require('@tryghost/errors');
@@ -221,7 +222,7 @@ describe('Exporter', function () {
 
             // NOTE: this test is serving a role of a reminder to have a look into exported tables allowlists
             //       if it failed you probably need to add or remove a table entry from table-lists module
-            should.deepEqual(actualTables, expectedTables);
+            assert.deepEqual(actualTables, expectedTables);
         });
 
         it('should be fixed when default settings is changed', function () {
@@ -236,7 +237,7 @@ describe('Exporter', function () {
 
             // NOTE: if default settings changed either modify the settings keys blocklist or increase allowedKeysLength
             //       This is a reminder to think about the importer/exporter scenarios ;)
-            const allowedKeysLength = 94;
+            const allowedKeysLength = 95;
             totalKeysLength.should.eql(SETTING_KEYS_BLOCKLIST.length + allowedKeysLength);
         });
     });

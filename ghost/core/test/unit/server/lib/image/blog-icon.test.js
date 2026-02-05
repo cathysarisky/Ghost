@@ -1,7 +1,8 @@
+const assert = require('node:assert/strict');
 const should = require('should');
 const sinon = require('sinon');
 const path = require('path');
-const BlogIcon = require('../../../../../core/server/lib/image/BlogIcon');
+const BlogIcon = require('../../../../../core/server/lib/image/blog-icon');
 
 describe('lib/image: blog icon', function () {
     describe('getIconUrl', function () {
@@ -83,7 +84,7 @@ describe('lib/image: blog icon', function () {
                     get: () => {}
                 }});
 
-                should.equal(blogIcon.getIconUrl({absolute: true, fallbackToDefault: false}), null);
+                assert.equal(blogIcon.getIconUrl({absolute: true, fallbackToDefault: false}), null);
             });
         });
     });

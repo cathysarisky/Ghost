@@ -1,9 +1,10 @@
+const assert = require('node:assert/strict');
 const should = require('should');
 const supertest = require('supertest');
 const _ = require('lodash');
 const localUtils = require('./utils');
 const testUtils = require('../../../utils');
-const configUtils = require('../../../utils/configUtils');
+const configUtils = require('../../../utils/config-utils');
 const config = require('../../../../core/shared/config');
 
 let request;
@@ -42,7 +43,7 @@ describe('api/endpoints/content/tags', function () {
             .expect('Cache-Control', testUtils.cacheRules.public)
             .expect(200)
             .then((res) => {
-                should.not.exist(res.headers['x-cache-invalidate']);
+                assert.equal(res.headers['x-cache-invalidate'], undefined);
                 const jsonResponse = res.body;
                 should.exist(jsonResponse);
                 should.exist(jsonResponse.tags);

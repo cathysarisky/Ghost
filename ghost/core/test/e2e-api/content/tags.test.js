@@ -3,7 +3,7 @@ const should = require('should');
 const supertest = require('supertest');
 const _ = require('lodash');
 const url = require('url');
-const configUtils = require('../../utils/configUtils');
+const configUtils = require('../../utils/config-utils');
 const config = require('../../../core/shared/config');
 const testUtils = require('../../utils');
 const dbUtils = require('../../utils/db-utils');
@@ -31,7 +31,7 @@ describe('Tags Content API', function () {
             .expect('Cache-Control', testUtils.cacheRules.public)
             .expect(200);
 
-        should.not.exist(res.headers['x-cache-invalidate']);
+        assert.equal(res.headers['x-cache-invalidate'], undefined);
         const jsonResponse = res.body;
         should.exist(jsonResponse.tags);
         localUtils.API.checkResponse(jsonResponse, 'tags');
@@ -62,7 +62,7 @@ describe('Tags Content API', function () {
             .expect('Cache-Control', testUtils.cacheRules.public)
             .expect(200);
 
-        should.not.exist(res.headers['x-cache-invalidate']);
+        assert.equal(res.headers['x-cache-invalidate'], undefined);
         const jsonResponse = res.body;
         should.exist(jsonResponse.tags);
         localUtils.API.checkResponse(jsonResponse, 'tags');
@@ -78,7 +78,7 @@ describe('Tags Content API', function () {
             .expect('Cache-Control', testUtils.cacheRules.public)
             .expect(200);
 
-        should.not.exist(res.headers['x-cache-invalidate']);
+        assert.equal(res.headers['x-cache-invalidate'], undefined);
         const jsonResponse = res.body;
         should.exist(jsonResponse.tags);
         localUtils.API.checkResponse(jsonResponse, 'tags');

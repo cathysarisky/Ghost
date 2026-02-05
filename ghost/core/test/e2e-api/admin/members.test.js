@@ -9,7 +9,7 @@ const sinon = require('sinon');
 const should = require('should');
 
 const testUtils = require('../../utils');
-const configUtils = require('../../utils/configUtils');
+const configUtils = require('../../utils/config-utils');
 
 const Papa = require('papaparse');
 
@@ -1768,8 +1768,8 @@ describe('Members API', function () {
         }
 
         // Check for this member with a paid subscription that the body results for the patch, get and browse endpoints are 100% identical
-        should.deepEqual(browseMember, readMember, 'Browsing a member returns a different format than reading a member');
-        should.deepEqual(memberWithPaidSubscription, readMember, 'Editing a member returns a different format than reading a member');
+        assert.deepEqual(browseMember, readMember, 'Browsing a member returns a different format than reading a member');
+        assert.deepEqual(memberWithPaidSubscription, readMember, 'Editing a member returns a different format than reading a member');
     });
 
     it('Cannot add unknown tiers to a member', async function () {
@@ -2397,6 +2397,93 @@ describe('Members API', function () {
         });
     });
 
+    describe('deleteEmailSuppression', function () {
+        it('Can delete email suppression for a member', async function () {
+            const suppressedMember = await models.Member.add({
+                email: 'suppression-test@email.com',
+                name: 'Suppression Test',
+                email_disabled: true
+            });
+
+            const suppression = await models.Suppression.add({
+                email: 'suppression-test@email.com',
+                reason: 'bounce'
+            });
+
+            try {
+                await agent
+                    .delete(`/members/${suppressedMember.id}/suppression`)
+                    .expectStatus(204)
+                    .matchBodySnapshot()
+                    .matchHeaderSnapshot({
+                        'content-version': anyContentVersion,
+                        etag: anyEtag
+                    });
+
+                await suppressedMember.refresh();
+                should(suppressedMember.get('email_disabled')).be.false();
+
+                const suppressionRecord = await models.Suppression.findOne({email: 'suppression-test@email.com'});
+                should(suppressionRecord).be.null();
+            } finally {
+                await models.Member.destroy({id: suppressedMember.id});
+                try {
+                    await models.Suppression.destroy({id: suppression.id});
+                } catch (e) {
+                    // Suppression was already deleted by the endpoint
+                }
+            }
+        });
+
+        it('Returns 404 for non-existent member', async function () {
+            await agent
+                .delete('/members/abcd1234abcd1234abcd1234/suppression')
+                .expectStatus(404)
+                .matchBodySnapshot({
+                    errors: [{
+                        id: anyUuid
+                    }]
+                })
+                .matchHeaderSnapshot({
+                    'content-version': anyContentVersion,
+                    etag: anyEtag
+                });
+        });
+
+        it('Returns 500 when suppression removal fails', async function () {
+            const emailSuppressionList = require('../../../core/server/services/email-suppression-list');
+            const removeEmailStub = sinon.stub(emailSuppressionList, 'removeEmail').resolves(false);
+
+            const suppressedMember = await models.Member.add({
+                email: 'suppression-fail-test@email.com',
+                name: 'Suppression Fail Test',
+                email_disabled: true
+            });
+
+            try {
+                await agent
+                    .delete(`/members/${suppressedMember.id}/suppression`)
+                    .expectStatus(500)
+                    .matchBodySnapshot({
+                        errors: [{
+                            id: anyUuid
+                        }]
+                    })
+                    .matchHeaderSnapshot({
+                        'content-version': anyContentVersion,
+                        etag: anyEtag
+                    });
+
+                // Verify email_disabled was NOT changed since the operation failed
+                await suppressedMember.refresh();
+                should(suppressedMember.get('email_disabled')).be.true();
+            } finally {
+                removeEmailStub.restore();
+                await models.Member.destroy({id: suppressedMember.id});
+            }
+        });
+    });
+
     // Log out
     it('Can log out', async function () {
         const member = await createMember({
@@ -2517,9 +2604,9 @@ describe('Members API', function () {
 
         const csv = Papa.parse(res.text, {header: true});
         should.exist(csv.data.find(row => row.name === 'Mr Egg'));
-        should.not.exist(csv.data.find(row => row.name === 'Egon Spengler'));
-        should.not.exist(csv.data.find(row => row.name === 'Ray Stantz'));
-        should.not.exist(csv.data.find(row => row.email === 'member2@test.com'));
+        assert.equal(csv.data.find(row => row.name === 'Egon Spengler'), undefined);
+        assert.equal(csv.data.find(row => row.name === 'Ray Stantz'), undefined);
+        assert.equal(csv.data.find(row => row.email === 'member2@test.com'), undefined);
         // note that this member doesn't have tiers
         should.exist(csv.data.find(row => row.labels.length > 0));
     });
@@ -3579,6 +3666,136 @@ describe('Members API Bulk operations', function () {
 
         const updatedModel2 = await models.Member.findOne({id: member2.id}, {withRelated: 'labels'});
         should(updatedModel2.relations.labels.models.map(m => m.id)).match([firstId, secondId]);
+    });
+
+    it('Can bulk add a label to members', async function () {
+        // Create a new label to add
+        const label = await models.Label.add({name: 'bulk-add-label'});
+
+        await agent
+            .put('/members/bulk/?all=true')
+            .body({bulk: {
+                action: 'addLabel',
+                meta: {
+                    label: {
+                        id: label.id
+                    }
+                }
+            }})
+            .expectStatus(200)
+            .matchBodySnapshot({
+                bulk: {
+                    meta: {
+                        stats: {
+                            successful: 8,
+                            unsuccessful: 0
+                        },
+                        unsuccessfulData: [],
+                        errors: []
+                    }
+                }
+            })
+            .matchHeaderSnapshot({
+                'content-version': anyContentVersion,
+                etag: anyEtag
+            });
+
+        // Verify all members have the label
+        const members = await models.Member.findAll({withRelated: 'labels'});
+        for (const member of members) {
+            const labelIds = member.relations.labels.models.map(m => m.id);
+            should(labelIds).containEql(label.id);
+        }
+    });
+
+    it('Can bulk add a label to members with filter', async function () {
+        const member1 = fixtureManager.get('members', 0);
+        const member2 = fixtureManager.get('members', 1);
+
+        // Create a new label to add
+        const label = await models.Label.add({name: 'filtered-add-label'});
+
+        await agent
+            .put(`/members/bulk/?filter=id:'${member1.id}'`)
+            .body({bulk: {
+                action: 'addLabel',
+                meta: {
+                    label: {
+                        id: label.id
+                    }
+                }
+            }})
+            .expectStatus(200)
+            .matchBodySnapshot({
+                bulk: {
+                    meta: {
+                        stats: {
+                            successful: 1,
+                            unsuccessful: 0
+                        },
+                        unsuccessfulData: [],
+                        errors: []
+                    }
+                }
+            })
+            .matchHeaderSnapshot({
+                'content-version': anyContentVersion,
+                etag: anyEtag
+            });
+
+        // Verify only member1 has the label
+        const updatedMember1 = await models.Member.findOne({id: member1.id}, {withRelated: 'labels'});
+        should(updatedMember1.relations.labels.models.map(m => m.id)).containEql(label.id);
+
+        const updatedMember2 = await models.Member.findOne({id: member2.id}, {withRelated: 'labels'});
+        should(updatedMember2.relations.labels.models.map(m => m.id)).not.containEql(label.id);
+    });
+
+    it('Handles duplicate labels gracefully when bulk adding', async function () {
+        const member1 = fixtureManager.get('members', 0);
+
+        // Create a label and add it to member1 (using name, as member model expects)
+        const label = await models.Label.add({name: 'duplicate-label-test'});
+        await models.Member.edit({labels: [{name: 'duplicate-label-test'}]}, {id: member1.id});
+
+        // Verify member1 has the label
+        const beforeMember = await models.Member.findOne({id: member1.id}, {withRelated: 'labels'});
+        const beforeLabelCount = beforeMember.relations.labels.models.filter(m => m.id === label.id).length;
+        should(beforeLabelCount).equal(1);
+
+        // Try to add the same label again
+        await agent
+            .put(`/members/bulk/?filter=id:'${member1.id}'`)
+            .body({bulk: {
+                action: 'addLabel',
+                meta: {
+                    label: {
+                        id: label.id
+                    }
+                }
+            }})
+            .expectStatus(200)
+            .matchBodySnapshot({
+                bulk: {
+                    meta: {
+                        stats: {
+                            successful: 1,
+                            unsuccessful: 0
+                        },
+                        unsuccessfulData: [],
+                        errors: []
+                    }
+                }
+            })
+            .matchHeaderSnapshot({
+                'content-version': anyContentVersion,
+                etag: anyEtag
+            });
+
+        // Verify member1 still has only one instance of the label (not duplicated)
+        const afterMember = await models.Member.findOne({id: member1.id}, {withRelated: 'labels'});
+        const afterLabelCount = afterMember.relations.labels.models.filter(m => m.id === label.id).length;
+        should(afterLabelCount).equal(1);
     });
 
     it('Can bulk delete members', async function () {

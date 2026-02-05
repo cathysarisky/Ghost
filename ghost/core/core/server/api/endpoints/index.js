@@ -93,6 +93,10 @@ module.exports = {
         return apiFramework.pipeline(require('./members'), localUtils);
     },
 
+    get memberCommenting() {
+        return apiFramework.pipeline(require('./member-commenting'), localUtils);
+    },
+
     get offers() {
         return apiFramework.pipeline(require('./offers'), localUtils);
     },
@@ -187,6 +191,10 @@ module.exports = {
 
     get tinybird() {
         return apiFramework.pipeline(require('./tinybird'), localUtils);
+    },
+
+    get featurebase() {
+        return apiFramework.pipeline(require('./featurebase'), localUtils);
     },
 
     get serializers() {

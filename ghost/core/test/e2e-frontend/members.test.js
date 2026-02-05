@@ -4,7 +4,7 @@ const sinon = require('sinon');
 const supertest = require('supertest');
 const moment = require('moment');
 const testUtils = require('../utils');
-const configUtils = require('../utils/configUtils');
+const configUtils = require('../utils/config-utils');
 const settingsCache = require('../../core/shared/settings-cache');
 const settingsHelpers = require('../../core/server/services/settings-helpers');
 const DomainEvents = require('@tryghost/domain-events');
@@ -282,7 +282,7 @@ describe('Front-end members behavior', function () {
                     'sort_order'
                 ]);
 
-                should.equal(restoreJsonResponse.newsletters[0].name, originalNewsletterName);
+                assert.equal(restoreJsonResponse.newsletters[0].name, originalNewsletterName);
             });
         });
 
@@ -885,11 +885,13 @@ describe('Front-end members behavior', function () {
                     'paid',
                     'created_at',
                     'enable_comment_notifications',
+                    'can_comment',
+                    'commenting',
                     'newsletters',
                     'email_suppression',
                     'unsubscribe_url'
                 ]);
-                Object.keys(memberData).should.have.length(14);
+                Object.keys(memberData).should.have.length(16);
                 memberData.should.not.have.property('id');
                 memberData.newsletters.should.have.length(1);
 
