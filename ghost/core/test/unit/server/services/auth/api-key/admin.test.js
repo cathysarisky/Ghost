@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict');
+const {assertExists} = require('../../../../../utils/assertions');
 const errors = require('@tryghost/errors');
 const jwt = require('jsonwebtoken');
 const should = require('should');
@@ -127,9 +128,9 @@ describe('Admin API Key Auth', function () {
         const res = {};
 
         apiKeyAuth.admin.authenticate(req, res, (err) => {
-            should.exist(err);
+            assertExists(err);
             assert.equal(err instanceof errors.UnauthorizedError, true);
-            err.code.should.eql('INVALID_JWT');
+            assert.equal(err.code, 'INVALID_JWT');
             assert.equal(req.api_key, undefined);
             done();
         });
@@ -145,9 +146,9 @@ describe('Admin API Key Auth', function () {
         const res = {};
 
         apiKeyAuth.admin.authenticate(req, res, function next(err) {
-            should.exist(err);
+            assertExists(err);
             assert.equal(err instanceof errors.UnauthorizedError, true);
-            err.code.should.eql('INVALID_AUTH_HEADER');
+            assert.equal(err.code, 'INVALID_AUTH_HEADER');
             assert.equal(req.api_key, undefined);
             done();
         });
@@ -163,9 +164,9 @@ describe('Admin API Key Auth', function () {
         const res = {};
 
         apiKeyAuth.admin.authenticate(req, res, function next(err) {
-            should.exist(err);
+            assertExists(err);
             assert.equal(err instanceof errors.BadRequestError, true);
-            err.code.should.eql('INVALID_JWT');
+            assert.equal(err.code, 'INVALID_JWT');
             assert.equal(req.api_key, undefined);
             done();
         });
@@ -190,9 +191,9 @@ describe('Admin API Key Auth', function () {
         const res = {};
 
         apiKeyAuth.admin.authenticate(req, res, function next(err) {
-            should.exist(err);
+            assertExists(err);
             assert.equal(err instanceof errors.UnauthorizedError, true);
-            err.code.should.eql('UNKNOWN_ADMIN_API_KEY');
+            assert.equal(err.code, 'UNKNOWN_ADMIN_API_KEY');
             assert.equal(req.api_key, undefined);
             done();
         });
@@ -219,10 +220,10 @@ describe('Admin API Key Auth', function () {
         const res = {};
 
         apiKeyAuth.admin.authenticate(req, res, function next(err) {
-            should.exist(err);
+            assertExists(err);
             assert.equal(err instanceof errors.UnauthorizedError, true);
-            err.code.should.eql('INVALID_JWT');
-            err.message.should.match(/jwt expired/);
+            assert.equal(err.code, 'INVALID_JWT');
+            assert.match(err.message, /jwt expired/);
             assert.equal(req.api_key, undefined);
             done();
         });
@@ -249,10 +250,10 @@ describe('Admin API Key Auth', function () {
         const res = {};
 
         apiKeyAuth.admin.authenticate(req, res, function next(err) {
-            should.exist(err);
+            assertExists(err);
             assert.equal(err instanceof errors.UnauthorizedError, true);
-            err.code.should.eql('INVALID_JWT');
-            err.message.should.match(/maxAge exceeded/);
+            assert.equal(err.code, 'INVALID_JWT');
+            assert.match(err.message, /maxAge exceeded/);
             assert.equal(req.api_key, undefined);
             done();
         });
@@ -279,9 +280,9 @@ describe('Admin API Key Auth', function () {
         this.fakeApiKey.type = 'content';
 
         apiKeyAuth.admin.authenticate(req, res, function next(err) {
-            should.exist(err);
+            assertExists(err);
             assert.equal(err instanceof errors.UnauthorizedError, true);
-            err.code.should.eql('INVALID_API_KEY_TYPE');
+            assert.equal(err.code, 'INVALID_API_KEY_TYPE');
             assert.equal(req.api_key, undefined);
             done();
         });

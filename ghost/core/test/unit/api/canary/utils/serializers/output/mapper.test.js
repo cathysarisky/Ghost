@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict');
+const {assertExists} = require('../../../../../../utils/assertions');
 const should = require('should');
 const sinon = require('sinon');
 const testUtils = require('../../../../../../utils');
@@ -66,17 +67,17 @@ describe('Unit: utils/serializers/output/mappers', function () {
 
             await mappers.posts(post, frame);
 
-            dateUtil.forPost.callCount.should.equal(1);
+            assert.equal(dateUtil.forPost.callCount, 1);
 
-            extraAttrsUtils.forPost.callCount.should.equal(1);
+            assert.equal(extraAttrsUtils.forPost.callCount, 1);
 
-            cleanUtil.post.callCount.should.eql(1);
-            cleanUtil.tag.callCount.should.eql(1);
-            cleanUtil.author.callCount.should.eql(1);
+            assert.equal(cleanUtil.post.callCount, 1);
+            assert.equal(cleanUtil.tag.callCount, 1);
+            assert.equal(cleanUtil.author.callCount, 1);
 
-            urlUtil.forPost.callCount.should.equal(1);
-            urlUtil.forTag.callCount.should.equal(1);
-            urlUtil.forUser.callCount.should.equal(1);
+            assert.equal(urlUtil.forPost.callCount, 1);
+            assert.equal(urlUtil.forTag.callCount, 1);
+            assert.equal(urlUtil.forUser.callCount, 1);
 
             urlUtil.forTag.getCall(0).args.should.eql(['id3', {id: 'id3', feature_image: 'value'}, frame.options]);
             urlUtil.forUser.getCall(0).args.should.eql(['id4', {name: 'Ghosty', id: 'id4'}, frame.options]);
@@ -103,9 +104,9 @@ describe('Unit: utils/serializers/output/mappers', function () {
 
             mappers.users(user, frame);
 
-            urlUtil.forUser.callCount.should.equal(1);
+            assert.equal(urlUtil.forUser.callCount, 1);
             urlUtil.forUser.getCall(0).args.should.eql(['id1', user, frame.options]);
-            cleanUtil.author.callCount.should.equal(1);
+            assert.equal(cleanUtil.author.callCount, 1);
         });
     });
 
@@ -129,9 +130,9 @@ describe('Unit: utils/serializers/output/mappers', function () {
 
             mappers.tags(tag, frame);
 
-            urlUtil.forTag.callCount.should.equal(1);
+            assert.equal(urlUtil.forTag.callCount, 1);
             urlUtil.forTag.getCall(0).args.should.eql(['id3', tag, frame.options]);
-            cleanUtil.tag.callCount.should.equal(1);
+            assert.equal(cleanUtil.tag.callCount, 1);
         });
     });
 
@@ -146,16 +147,16 @@ describe('Unit: utils/serializers/output/mappers', function () {
 
             const mapped = mappers.integrations(integration, frame);
 
-            should.exist(mapped.api_keys);
+            assertExists(mapped.api_keys);
 
             mapped.api_keys.forEach((key) => {
                 if (key.type === 'admin') {
                     const [id, secret] = key.secret.split(':');
-                    should.exist(id);
-                    should.exist(secret);
+                    assertExists(id);
+                    assertExists(secret);
                 } else {
                     const [id, secret] = key.secret.split(':');
-                    should.exist(id);
+                    assertExists(id);
                     assert.equal(secret, undefined);
                 }
             });
@@ -401,6 +402,7 @@ describe('Unit: utils/serializers/output/mappers', function () {
                     },
                     count: {
                         replies: 12,
+                        direct_replies: 5,
                         likes: 13,
                         foo: 1
                     }
@@ -441,6 +443,7 @@ describe('Unit: utils/serializers/output/mappers', function () {
                     },
                     count: {
                         replies: 12,
+                        direct_replies: 5,
                         likes: 13
                     }
                 }
@@ -642,7 +645,7 @@ describe('Unit: utils/serializers/output/mappers', function () {
                     }
                 },
                 in_reply_to_id: 'comment2',
-                inReplyTo: {
+                in_reply_to: {
                     id: 'comment2',
                     parent_id: 'comment1',
                     html: '<p>comment 2</p>',
@@ -691,7 +694,7 @@ describe('Unit: utils/serializers/output/mappers', function () {
             const frame = {};
 
             const model = {
-                inReplyTo: {
+                in_reply_to: {
                     html: '<p>First paragraph <a href="https://example.com">with link</a>,<br> and new line.</p><p>Second paragraph</p>',
                     status: 'published'
                 }
@@ -699,7 +702,7 @@ describe('Unit: utils/serializers/output/mappers', function () {
 
             const mapped = mappers.comments(model, frame);
 
-            converterSpy.calledOnce.should.eql(true, 'htmlToPlaintext.commentSnippet was not called');
+            assert.equal(converterSpy.calledOnce, true, 'htmlToPlaintext.commentSnippet was not called');
 
             mapped.should.eql({
                 in_reply_to_snippet: 'First paragraph with link, and new line. Second paragraph',
@@ -713,7 +716,7 @@ describe('Unit: utils/serializers/output/mappers', function () {
             const model = {
                 id: 'comment1',
                 html: '<p>comment 1</p>',
-                inReplyTo: undefined
+                in_reply_to: undefined
             };
 
             const mapped = mappers.comments(model, frame);

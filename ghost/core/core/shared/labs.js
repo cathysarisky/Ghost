@@ -25,7 +25,9 @@ const GA_FEATURES = [
     'announcementBar',
     'customFonts',
     'explore',
-    'inboxlinks'
+    'inboxlinks',
+    'commentModeration',
+    'commentPermalinks'
 ];
 
 // These features are considered publicly available and can be enabled/disabled by users
@@ -48,8 +50,6 @@ const PRIVATE_FEATURES = [
     'emailUniqueid',
     'welcomeEmails',
     'themeTranslation',
-    'commentModeration',
-    'commentPermalinks',
     'indexnow',
     'featurebaseFeedback',
     'transistor'

@@ -4,6 +4,7 @@ const {queryStringToken} = regexes;
 const ObjectId = require('bson-objectid').default;
 
 const assert = require('assert/strict');
+const {assertExists} = require('../../utils/assertions');
 const nock = require('nock');
 const sinon = require('sinon');
 const should = require('should');
@@ -475,7 +476,7 @@ describe('Members API - member attribution', function () {
                 })
             })
             .expect(({body}) => {
-                should(body.events.find(e => e.type !== 'signup_event')).be.undefined();
+                assert.equal(body.events.find(e => e.type !== 'signup_event'), undefined);
                 should(body.events.map(e => e.data.attribution)).containDeep(signupAttributions);
             });
     });
@@ -1228,6 +1229,12 @@ describe('Members API', function () {
         sinon.stub(stripeService.api, 'createPrice').resolves(fakePrice);
         sinon.stub(stripeService.api, 'createSubscription').resolves(fakeSubscription);
         sinon.stub(stripeService.api, 'getSubscription').resolves(fakeSubscription);
+        sinon.stub(stripeService.api, 'getCustomer').resolves({
+            id: 'cus_1',
+            invoice_settings: {
+                default_payment_method: null
+            }
+        });
         const initialMember = {
             name: 'Name',
             email: 'compedtest@test.com',
@@ -1849,7 +1856,7 @@ describe('Members API', function () {
 
         // Check that the product that we are going to add is not the same as the existing one
         const product = await getOtherPaidProduct();
-        should(memberWithPaidSubscription.tiers).have.length(1);
+        assert.equal(memberWithPaidSubscription.tiers.length, 1);
         should(memberWithPaidSubscription.tiers[0].id).not.eql(product.id);
 
         // Add it manually
@@ -2383,7 +2390,7 @@ describe('Members API', function () {
 
             // email_disabled should be true
             await testMember.refresh();
-            should(testMember.get('email_disabled')).be.true();
+            assert.equal(testMember.get('email_disabled'), true);
 
             // Now update the email address of that member to a non-suppressed email
             await agent
@@ -2393,7 +2400,7 @@ describe('Members API', function () {
 
             // email_disabled should be false
             await testMember.refresh();
-            should(testMember.get('email_disabled')).be.false();
+            assert.equal(testMember.get('email_disabled'), false);
         });
     });
 
@@ -2421,10 +2428,10 @@ describe('Members API', function () {
                     });
 
                 await suppressedMember.refresh();
-                should(suppressedMember.get('email_disabled')).be.false();
+                assert.equal(suppressedMember.get('email_disabled'), false);
 
                 const suppressionRecord = await models.Suppression.findOne({email: 'suppression-test@email.com'});
-                should(suppressionRecord).be.null();
+                assert.equal(suppressionRecord, null);
             } finally {
                 await models.Member.destroy({id: suppressedMember.id});
                 try {
@@ -2476,7 +2483,7 @@ describe('Members API', function () {
 
                 // Verify email_disabled was NOT changed since the operation failed
                 await suppressedMember.refresh();
-                should(suppressedMember.get('email_disabled')).be.true();
+                assert.equal(suppressedMember.get('email_disabled'), true);
             } finally {
                 removeEmailStub.restore();
                 await models.Member.destroy({id: suppressedMember.id});
@@ -2579,15 +2586,15 @@ describe('Members API', function () {
                 'content-disposition': anyString
             });
 
-        res.text.should.match(/id,email,name,note,subscribed_to_emails,complimentary_plan,stripe_customer_id,created_at,deleted_at,labels,tiers/);
+        assert.match(res.text, /id,email,name,note,subscribed_to_emails,complimentary_plan,stripe_customer_id,created_at,deleted_at,labels,tiers/);
 
         const csv = Papa.parse(res.text, {header: true});
-        should.exist(csv.data.find(row => row.name === 'Mr Egg'));
-        should.exist(csv.data.find(row => row.name === 'Winston Zeddemore'));
-        should.exist(csv.data.find(row => row.name === 'Ray Stantz'));
-        should.exist(csv.data.find(row => row.email === 'member2@test.com'));
-        should.exist(csv.data.find(row => row.tiers.length > 0));
-        should.exist(csv.data.find(row => row.labels.length > 0));
+        assertExists(csv.data.find(row => row.name === 'Mr Egg'));
+        assertExists(csv.data.find(row => row.name === 'Winston Zeddemore'));
+        assertExists(csv.data.find(row => row.name === 'Ray Stantz'));
+        assertExists(csv.data.find(row => row.email === 'member2@test.com'));
+        assertExists(csv.data.find(row => row.tiers.length > 0));
+        assertExists(csv.data.find(row => row.labels.length > 0));
     });
 
     it('Can export a filtered CSV', async function () {
@@ -2600,15 +2607,15 @@ describe('Members API', function () {
                 'content-disposition': anyString
             });
 
-        res.text.should.match(/id,email,name,note,subscribed_to_emails,complimentary_plan,stripe_customer_id,created_at,deleted_at,labels,tiers/);
+        assert.match(res.text, /id,email,name,note,subscribed_to_emails,complimentary_plan,stripe_customer_id,created_at,deleted_at,labels,tiers/);
 
         const csv = Papa.parse(res.text, {header: true});
-        should.exist(csv.data.find(row => row.name === 'Mr Egg'));
+        assertExists(csv.data.find(row => row.name === 'Mr Egg'));
         assert.equal(csv.data.find(row => row.name === 'Egon Spengler'), undefined);
         assert.equal(csv.data.find(row => row.name === 'Ray Stantz'), undefined);
         assert.equal(csv.data.find(row => row.email === 'member2@test.com'), undefined);
         // note that this member doesn't have tiers
-        should.exist(csv.data.find(row => row.labels.length > 0));
+        assertExists(csv.data.find(row => row.labels.length > 0));
     });
 
     it('Can delete a member without cancelling Stripe Subscription', async function () {
@@ -3363,7 +3370,7 @@ describe('Members API Bulk operations', function () {
         const newsletterCount = 2;
 
         const model = await models.Member.findOne({id: member.id}, {withRelated: 'newsletters'});
-        should(model.relations.newsletters.models.length).equal(newsletterCount, 'This test requires a member with 2 or more newsletters');
+        assert.equal(model.relations.newsletters.models.length, newsletterCount, 'This test requires a member with 2 or more newsletters');
 
         await agent
             .put(`/members/bulk/?filter=id:'${member.id}'`)
@@ -3390,7 +3397,7 @@ describe('Members API Bulk operations', function () {
             });
 
         const updatedModel = await models.Member.findOne({id: member.id}, {withRelated: 'newsletters'});
-        should(updatedModel.relations.newsletters.models.length).equal(0, 'This member should be unsubscribed from all newsletters');
+        assert.equal(updatedModel.relations.newsletters.models.length, 0, 'This member should be unsubscribed from all newsletters');
 
         // When we do it again, we should still receive a count of 1, because we unsubcribed one member (who happens to be already unsubscribed)
         await agent
@@ -3423,7 +3430,7 @@ describe('Members API Bulk operations', function () {
         const newsletterCount = 2;
 
         const model = await models.Member.findOne({id: member.id}, {withRelated: 'newsletters'});
-        should(model.relations.newsletters.models.length).equal(newsletterCount, 'This test requires a member with 2 or more newsletters');
+        assert.equal(model.relations.newsletters.models.length, newsletterCount, 'This test requires a member with 2 or more newsletters');
 
         await agent
             .put(`/members/bulk/?all=true`)
@@ -3447,7 +3454,7 @@ describe('Members API Bulk operations', function () {
             });
         const updatedModel = await models.Member.findOne({id: member.id}, {withRelated: 'newsletters'});
         // ensure they were unsubscribed from the single 'chosen' newsletter
-        should(updatedModel.relations.newsletters.models.length).equal(newsletterCount - 1);
+        assert.equal(updatedModel.relations.newsletters.models.length, newsletterCount - 1);
     });
 
     it('Can bulk unsubscribe members with deprecated subscribed filter', async function () {
@@ -3507,7 +3514,7 @@ describe('Members API Bulk operations', function () {
             if (model.id === ignoredMember.id) {
                 continue;
             }
-            should(model.relations.newsletters.models.length).equal(0, 'This member should be unsubscribed from all newsletters');
+            assert.equal(model.relations.newsletters.models.length, 0, 'This member should be unsubscribed from all newsletters');
         }
     });
 
@@ -3704,7 +3711,7 @@ describe('Members API Bulk operations', function () {
         const members = await models.Member.findAll({withRelated: 'labels'});
         for (const member of members) {
             const labelIds = member.relations.labels.models.map(m => m.id);
-            should(labelIds).containEql(label.id);
+            assert(labelIds.includes(label.id));
         }
     });
 
@@ -3745,10 +3752,10 @@ describe('Members API Bulk operations', function () {
 
         // Verify only member1 has the label
         const updatedMember1 = await models.Member.findOne({id: member1.id}, {withRelated: 'labels'});
-        should(updatedMember1.relations.labels.models.map(m => m.id)).containEql(label.id);
+        assert(updatedMember1.relations.labels.models.map(m => m.id).includes(label.id));
 
         const updatedMember2 = await models.Member.findOne({id: member2.id}, {withRelated: 'labels'});
-        should(updatedMember2.relations.labels.models.map(m => m.id)).not.containEql(label.id);
+        assert(!updatedMember2.relations.labels.models.some(m => m.id === label.id));
     });
 
     it('Handles duplicate labels gracefully when bulk adding', async function () {
@@ -3761,7 +3768,7 @@ describe('Members API Bulk operations', function () {
         // Verify member1 has the label
         const beforeMember = await models.Member.findOne({id: member1.id}, {withRelated: 'labels'});
         const beforeLabelCount = beforeMember.relations.labels.models.filter(m => m.id === label.id).length;
-        should(beforeLabelCount).equal(1);
+        assert.equal(beforeLabelCount, 1);
 
         // Try to add the same label again
         await agent
@@ -3795,7 +3802,7 @@ describe('Members API Bulk operations', function () {
         // Verify member1 still has only one instance of the label (not duplicated)
         const afterMember = await models.Member.findOne({id: member1.id}, {withRelated: 'labels'});
         const afterLabelCount = afterMember.relations.labels.models.filter(m => m.id === label.id).length;
-        should(afterLabelCount).equal(1);
+        assert.equal(afterLabelCount, 1);
     });
 
     it('Can bulk delete members', async function () {

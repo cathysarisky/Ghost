@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict');
+const {assertExists} = require('../../../../../utils/assertions');
 const should = require('should');
 const sinon = require('sinon');
 const testUtils = require('../../../../../utils');
@@ -119,7 +120,7 @@ describe('Unit - services/routing/controllers/entry', function () {
                 });
 
             urlUtilsRedirectToAdminStub.callsFake(function (statusCode, _res, editorUrl) {
-                statusCode.should.eql(302);
+                assert.equal(statusCode, 302);
                 editorUrl.should.eql(EDITOR_URL + post.id);
                 done();
             });
@@ -147,7 +148,7 @@ describe('Unit - services/routing/controllers/entry', function () {
 
             controllers.entry(req, res, async (err) => {
                 await configUtils.restore();
-                urlUtilsRedirectToAdminStub.called.should.eql(false);
+                assert.equal(urlUtilsRedirectToAdminStub.called, false);
                 assert.equal(err, undefined);
                 done(err);
             });
@@ -198,7 +199,7 @@ describe('Unit - services/routing/controllers/entry', function () {
             });
 
             controllers.entry(req, res, function (err) {
-                should.exist(err);
+                assertExists(err);
                 done(err);
             });
         });

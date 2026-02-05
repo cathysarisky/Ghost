@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict');
+const {assertExists} = require('../../../utils/assertions');
 const should = require('should');
 const supertest = require('supertest');
 const testUtils = require('../../../utils');
@@ -31,9 +32,9 @@ describe('Members Sigin URL API', function () {
                 .then((res) => {
                     assert.equal(res.headers['x-cache-invalidate'], undefined);
                     const jsonResponse = res.body;
-                    should.exist(jsonResponse);
-                    should.exist(jsonResponse.member_signin_urls);
-                    jsonResponse.member_signin_urls.should.have.length(1);
+                    assertExists(jsonResponse);
+                    assertExists(jsonResponse.member_signin_urls);
+                    assert.equal(jsonResponse.member_signin_urls.length, 1);
                     localUtils.API.checkResponse(jsonResponse.member_signin_urls[0], 'member_signin_url');
                 });
         });
@@ -62,9 +63,9 @@ describe('Members Sigin URL API', function () {
                 .then((res) => {
                     assert.equal(res.headers['x-cache-invalidate'], undefined);
                     const jsonResponse = res.body;
-                    should.exist(jsonResponse);
-                    should.exist(jsonResponse.member_signin_urls);
-                    jsonResponse.member_signin_urls.should.have.length(1);
+                    assertExists(jsonResponse);
+                    assertExists(jsonResponse.member_signin_urls);
+                    assert.equal(jsonResponse.member_signin_urls.length, 1);
                     localUtils.API.checkResponse(jsonResponse.member_signin_urls[0], 'member_signin_url');
                 });
         });
@@ -129,9 +130,9 @@ describe('Members Sigin URL API', function () {
                 .then((res) => {
                     assert.equal(res.headers['x-cache-invalidate'], undefined);
                     const jsonResponse = res.body;
-                    should.exist(jsonResponse);
-                    should.exist(jsonResponse.member_signin_urls);
-                    jsonResponse.member_signin_urls.should.have.length(1);
+                    assertExists(jsonResponse);
+                    assertExists(jsonResponse.member_signin_urls);
+                    assert.equal(jsonResponse.member_signin_urls.length, 1);
                     localUtils.API.checkResponse(jsonResponse.member_signin_urls[0], 'member_signin_url');
                 });
         }); 

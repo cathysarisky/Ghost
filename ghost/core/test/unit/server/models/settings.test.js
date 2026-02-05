@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict');
+const {assertExists} = require('../../../utils/assertions');
 const should = require('should');
 const sinon = require('sinon');
 const mockDb = require('mock-knex');
@@ -50,9 +51,9 @@ describe('Unit: models/settings', function () {
                 type: 'string'
             })
                 .then(() => {
-                    eventSpy.calledTwice.should.be.true();
-                    eventSpy.firstCall.calledWith('settings.added').should.be.true();
-                    eventSpy.secondCall.calledWith('settings.description.added').should.be.true();
+                    assert.equal(eventSpy.calledTwice, true);
+                    assert.equal(eventSpy.firstCall.calledWith('settings.added'), true);
+                    assert.equal(eventSpy.secondCall.calledWith('settings.description.added'), true);
                 });
         });
 
@@ -74,9 +75,9 @@ describe('Unit: models/settings', function () {
                 value: 'edited value'
             })
                 .then(() => {
-                    eventSpy.calledTwice.should.be.true();
-                    eventSpy.firstCall.calledWith('settings.edited').should.be.true();
-                    eventSpy.secondCall.calledWith('settings.description.edited').should.be.true();
+                    assert.equal(eventSpy.calledTwice, true);
+                    assert.equal(eventSpy.firstCall.calledWith('settings.edited'), true);
+                    assert.equal(eventSpy.secondCall.calledWith('settings.description.edited'), true);
                 });
         });
     });
@@ -161,7 +162,7 @@ describe('Unit: models/settings', function () {
             } catch (err) {
                 error = err;
             } finally {
-                should.exist(error, `Setting Model should throw when saving invalid ${key}`);
+                assertExists(error, `Setting Model should throw when saving invalid ${key}`);
                 should.ok(error instanceof errors.ValidationError, 'Setting Model should throw ValidationError');
             }
         }
