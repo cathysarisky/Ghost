@@ -1,6 +1,5 @@
 const assert = require('node:assert/strict');
 const sinon = require('sinon');
-const should = require('should');
 const rewire = require('rewire');
 const errors = require('@tryghost/errors');
 
@@ -29,7 +28,7 @@ describe('MemberWelcomeEmailRenderer', function () {
 
     describe('render', function () {
         it('renders Lexical content to HTML via lexicalLib.render', async function () {
-            const renderer = new MemberWelcomeEmailRenderer();
+            const renderer = new MemberWelcomeEmailRenderer({t: key => key});
             const lexicalJson = '{"root":{"children":[]}}';
 
             await renderer.render({
@@ -45,7 +44,7 @@ describe('MemberWelcomeEmailRenderer', function () {
 
         it('substitutes member template variables', async function () {
             lexicalRenderStub.resolves('<p>Hello {name}, or {first_name}! Contact: {email}</p>');
-            const renderer = new MemberWelcomeEmailRenderer();
+            const renderer = new MemberWelcomeEmailRenderer({t: key => key});
 
             const result = await renderer.render({
                 lexical: '{}',
@@ -61,7 +60,7 @@ describe('MemberWelcomeEmailRenderer', function () {
 
         it('substitutes site template variables', async function () {
             lexicalRenderStub.resolves('<p>Welcome to {site_title} at {site_url}</p>');
-            const renderer = new MemberWelcomeEmailRenderer();
+            const renderer = new MemberWelcomeEmailRenderer({t: key => key});
 
             const result = await renderer.render({
                 lexical: '{}',
@@ -76,7 +75,7 @@ describe('MemberWelcomeEmailRenderer', function () {
 
         it('inlines accentColor into link styles', async function () {
             lexicalRenderStub.resolves('<p><a href="https://example.com">Click here</a></p>');
-            const renderer = new MemberWelcomeEmailRenderer();
+            const renderer = new MemberWelcomeEmailRenderer({t: key => key});
 
             const result = await renderer.render({
                 lexical: '{}',
@@ -89,7 +88,7 @@ describe('MemberWelcomeEmailRenderer', function () {
         });
 
         it('substitutes template variables in subject', async function () {
-            const renderer = new MemberWelcomeEmailRenderer();
+            const renderer = new MemberWelcomeEmailRenderer({t: key => key});
 
             const result = await renderer.render({
                 lexical: '{}',
@@ -103,7 +102,7 @@ describe('MemberWelcomeEmailRenderer', function () {
 
         it('renders empty when member name is missing and no fallback specified', async function () {
             lexicalRenderStub.resolves('<p>Hello {name}!</p>');
-            const renderer = new MemberWelcomeEmailRenderer();
+            const renderer = new MemberWelcomeEmailRenderer({t: key => key});
 
             const result = await renderer.render({
                 lexical: '{}',
@@ -118,7 +117,7 @@ describe('MemberWelcomeEmailRenderer', function () {
 
         it('uses custom fallback when member name is missing', async function () {
             lexicalRenderStub.resolves('<p>Hello {name, "there"}</p>');
-            const renderer = new MemberWelcomeEmailRenderer();
+            const renderer = new MemberWelcomeEmailRenderer({t: key => key});
 
             const result = await renderer.render({
                 lexical: '{}',
@@ -132,7 +131,7 @@ describe('MemberWelcomeEmailRenderer', function () {
 
         it('uses custom fallback for first_name when missing', async function () {
             lexicalRenderStub.resolves('<p>Hey {first_name, "friend"}</p>');
-            const renderer = new MemberWelcomeEmailRenderer();
+            const renderer = new MemberWelcomeEmailRenderer({t: key => key});
 
             const result = await renderer.render({
                 lexical: '{}',
@@ -146,7 +145,7 @@ describe('MemberWelcomeEmailRenderer', function () {
 
         it('ignores fallback when member name is present', async function () {
             lexicalRenderStub.resolves('<p>Hello {name, "there"}</p>');
-            const renderer = new MemberWelcomeEmailRenderer();
+            const renderer = new MemberWelcomeEmailRenderer({t: key => key});
 
             const result = await renderer.render({
                 lexical: '{}',
@@ -160,7 +159,7 @@ describe('MemberWelcomeEmailRenderer', function () {
 
         it('renders empty when member email is missing', async function () {
             lexicalRenderStub.resolves('<p>Email: {email}!</p>');
-            const renderer = new MemberWelcomeEmailRenderer();
+            const renderer = new MemberWelcomeEmailRenderer({t: key => key});
 
             const result = await renderer.render({
                 lexical: '{}',
@@ -175,7 +174,7 @@ describe('MemberWelcomeEmailRenderer', function () {
 
         it('extracts first name correctly from full name', async function () {
             lexicalRenderStub.resolves('<p>Hi {first_name}</p>');
-            const renderer = new MemberWelcomeEmailRenderer();
+            const renderer = new MemberWelcomeEmailRenderer({t: key => key});
 
             const result = await renderer.render({
                 lexical: '{}',
@@ -189,7 +188,7 @@ describe('MemberWelcomeEmailRenderer', function () {
 
         it('handles whitespace in name when extracting first_name', async function () {
             lexicalRenderStub.resolves('<p>Hi {first_name, "friend"}</p>');
-            const renderer = new MemberWelcomeEmailRenderer();
+            const renderer = new MemberWelcomeEmailRenderer({t: key => key});
 
             const paddedResult = await renderer.render({
                 lexical: '{}',
@@ -210,7 +209,7 @@ describe('MemberWelcomeEmailRenderer', function () {
 
         it('wraps content in wrapper.hbs template', async function () {
             lexicalRenderStub.resolves('<p>Content</p>');
-            const renderer = new MemberWelcomeEmailRenderer();
+            const renderer = new MemberWelcomeEmailRenderer({t: key => key});
             const year = new Date().getFullYear();
 
             const result = await renderer.render({
@@ -231,7 +230,7 @@ describe('MemberWelcomeEmailRenderer', function () {
 
         it('generates plain text from HTML', async function () {
             lexicalRenderStub.resolves('<p>Hello World</p>');
-            const renderer = new MemberWelcomeEmailRenderer();
+            const renderer = new MemberWelcomeEmailRenderer({t: key => key});
 
             const result = await renderer.render({
                 lexical: '{}',
@@ -240,13 +239,13 @@ describe('MemberWelcomeEmailRenderer', function () {
                 siteSettings: defaultSiteSettings
             });
 
-            result.text.should.be.a.String();
+            assert.equal(typeof result.text, 'string');
             assert(result.text.includes('Hello World'));
         });
 
         it('throws IncorrectUsageError for invalid Lexical', async function () {
             lexicalRenderStub.rejects(new Error('Invalid JSON'));
-            const renderer = new MemberWelcomeEmailRenderer();
+            const renderer = new MemberWelcomeEmailRenderer({t: key => key});
 
             await assert.rejects(renderer.render({
                 lexical: 'invalid',
@@ -258,7 +257,7 @@ describe('MemberWelcomeEmailRenderer', function () {
 
         it('includes error context in IncorrectUsageError', async function () {
             lexicalRenderStub.rejects(new Error('Parse error'));
-            const renderer = new MemberWelcomeEmailRenderer();
+            const renderer = new MemberWelcomeEmailRenderer({t: key => key});
 
             await assert.rejects(
                 renderer.render({
@@ -277,7 +276,7 @@ describe('MemberWelcomeEmailRenderer', function () {
 
         it('escapes HTML in member values for body but not subject', async function () {
             lexicalRenderStub.resolves('<p>Hello {name}</p>');
-            const renderer = new MemberWelcomeEmailRenderer();
+            const renderer = new MemberWelcomeEmailRenderer({t: key => key});
 
             const result = await renderer.render({
                 lexical: '{}',
@@ -293,7 +292,7 @@ describe('MemberWelcomeEmailRenderer', function () {
 
         it('removes unknown tokens from output', async function () {
             lexicalRenderStub.resolves('<p>Hello {unknown_token} and {another}</p>');
-            const renderer = new MemberWelcomeEmailRenderer();
+            const renderer = new MemberWelcomeEmailRenderer({t: key => key});
 
             const result = await renderer.render({
                 lexical: '{}',
@@ -305,6 +304,282 @@ describe('MemberWelcomeEmailRenderer', function () {
             assert(!result.html.includes('%%{'));
             assert(!result.html.includes('}%%'));
             assert.equal(result.subject, 'Welcome !');
+        });
+
+        it('removes code wrappers around replacement strings', async function () {
+            lexicalRenderStub.resolves('<p>Hello <code>{first_name}</code></p>');
+            const renderer = new MemberWelcomeEmailRenderer({t: key => key});
+
+            const result = await renderer.render({
+                lexical: '{}',
+                subject: 'Welcome!',
+                member: {name: 'John Doe', email: 'john@example.com'},
+                siteSettings: defaultSiteSettings
+            });
+
+            assert(!result.html.includes('<code>{first_name}</code>'));
+            assert(result.html.includes('Hello John'));
+        });
+
+        it('preserves code blocks that are not replacement strings', async function () {
+            lexicalRenderStub.resolves('<p>Here is some code: <code>if (x) { return y; }</code> and a greeting for <code>{first_name}</code></p>');
+            const renderer = new MemberWelcomeEmailRenderer({t: key => key});
+
+            const result = await renderer.render({
+                lexical: '{}',
+                subject: 'Welcome!',
+                member: {name: 'John Doe', email: 'john@example.com'},
+                siteSettings: defaultSiteSettings
+            });
+
+            // Regular code should remain wrapped in <code>
+            assert(result.html.match(/<code[^>]*>.*?if.*?return.*?<\/code>/));
+            // Replacement string should have code wrapper removed and be substituted
+            assert(result.html.includes('a greeting for John'));
+            assert(!result.html.includes('{first_name}'));
+        });
+
+        it('removes code wrappers around replacement strings with fallback', async function () {
+            lexicalRenderStub.resolves('<p>Hey <code>{first_name, "friend"}</code></p>');
+            const renderer = new MemberWelcomeEmailRenderer({t: key => key});
+
+            const result = await renderer.render({
+                lexical: '{}',
+                subject: 'Welcome!',
+                member: {email: 'john@example.com'},
+                siteSettings: defaultSiteSettings
+            });
+
+            assert(!result.html.includes('<code>{first_name, "friend"}</code>'));
+            assert(result.html.includes('Hey friend'));
+        });
+
+        it('removes code wrappers around replacement strings with fallback (no comma)', async function () {
+            lexicalRenderStub.resolves('<p>Hey <code>{first_name "friend"}</code></p>');
+            const renderer = new MemberWelcomeEmailRenderer({t: key => key});
+
+            const result = await renderer.render({
+                lexical: '{}',
+                subject: 'Welcome!',
+                member: {email: 'john@example.com'},
+                siteSettings: defaultSiteSettings
+            });
+
+            assert(!result.html.includes('<code>{first_name "friend"}</code>'));
+            assert(result.html.includes('Hey friend'));
+        });
+
+        it('translates footer text using the t helper', async function () {
+            lexicalRenderStub.resolves('<p>Content</p>');
+            const renderer = new MemberWelcomeEmailRenderer({t: (key) => {
+                if (key === 'Manage your preferences') {
+                    return 'Gérer vos préférences';
+                }
+                return key;
+            }});
+
+            const result = await renderer.render({
+                lexical: '{}',
+                subject: 'Welcome!',
+                member: {name: 'John', email: 'john@example.com'},
+                siteSettings: defaultSiteSettings
+            });
+
+            assert(result.html.includes('Gérer vos préférences'));
+            assert(!result.html.includes('Manage your preferences'));
+        });
+
+        it('applies shared Koenig card styles used by newsletters', async function () {
+            lexicalRenderStub.resolves(`
+                <table class="kg-card kg-button-card" border="0" cellpadding="0" cellspacing="0">
+                    <tbody>
+                        <tr>
+                            <td class="kg-card-spacing">
+                                <table class="btn" border="0" cellspacing="0" cellpadding="0" align="center">
+                                    <tbody>
+                                        <tr>
+                                            <td align="center">
+                                                <a href="https://example.com">Click me</a>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="kg-card kg-callout-card kg-callout-card-blue">
+                    <div class="kg-callout-emoji">💡</div>
+                    <div class="kg-callout-text">Shared styles</div>
+                </div>
+            `);
+            const renderer = new MemberWelcomeEmailRenderer({t: key => key});
+
+            const result = await renderer.render({
+                lexical: '{}',
+                subject: 'Welcome!',
+                member: {name: 'John', email: 'john@example.com'},
+                siteSettings: defaultSiteSettings
+            });
+
+            assert(result.html.includes('kg-callout-card'));
+            assert(result.html.includes('padding: 24px'));
+            assert(result.html.includes('table class="btn"'));
+            assert(result.html.includes('background-color: #ff0000'));
+        });
+
+        it('does not inline margin 0 auto on button tables that would override alignment', async function () {
+            lexicalRenderStub.resolves(`
+                <table class="kg-card kg-button-card" border="0" cellpadding="0" cellspacing="0">
+                    <tbody>
+                        <tr>
+                            <td class="kg-card-spacing">
+                                <table class="btn" border="0" cellspacing="0" cellpadding="0" align="left">
+                                    <tbody>
+                                        <tr>
+                                            <td align="center">
+                                                <a href="https://example.com">Left</a>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            `);
+            const renderer = new MemberWelcomeEmailRenderer({t: key => key});
+
+            const result = await renderer.render({
+                lexical: '{}',
+                subject: 'Welcome!',
+                member: {name: 'John', email: 'john@example.com'},
+                siteSettings: defaultSiteSettings
+            });
+
+            assert.match(result.html, /<table[^>]*class="btn"[^>]*align="left"/);
+
+            const btnMatch = result.html.match(/<table[^>]*class="btn"[^>]*>/);
+            assert(btnMatch, 'should have a btn table');
+            assert(!btnMatch[0].includes('margin: 0 auto'), 'button should not have margin: 0 auto');
+        });
+
+        it('inlines figcaption styles for image card captions', async function () {
+            lexicalRenderStub.resolves(`
+                <figure class="kg-card kg-image-card kg-card-hascaption">
+                    <img src="https://example.com/photo.jpg" class="kg-image" alt="alt text" loading="lazy" width="600" height="400">
+                    <figcaption>A caption</figcaption>
+                </figure>
+            `);
+            const renderer = new MemberWelcomeEmailRenderer({t: key => key});
+
+            const result = await renderer.render({
+                lexical: '{}',
+                subject: 'Welcome!',
+                member: {name: 'John', email: 'john@example.com'},
+                siteSettings: defaultSiteSettings
+            });
+
+            // figcaption should have centered text and muted color inlined
+            assert(result.html.includes('A caption'));
+            const figcaptionMatch = result.html.match(/<figcaption[^>]*style="([^"]*)"[^>]*>/);
+            assert(figcaptionMatch, 'figcaption should have inline styles');
+            const figcaptionStyle = figcaptionMatch[1];
+            assert(figcaptionStyle.includes('text-align: center'), 'figcaption should be centered');
+            assert(figcaptionStyle.includes('font-size: 13px'), 'figcaption should have 13px font');
+        });
+
+        it('inlines figure margin and image max-width for image cards', async function () {
+            lexicalRenderStub.resolves(`
+                <figure class="kg-card kg-image-card">
+                    <img src="https://example.com/photo.jpg" class="kg-image" alt="alt text" loading="lazy" width="600" height="400">
+                </figure>
+            `);
+            const renderer = new MemberWelcomeEmailRenderer({t: key => key});
+
+            const result = await renderer.render({
+                lexical: '{}',
+                subject: 'Welcome!',
+                member: {name: 'John', email: 'john@example.com'},
+                siteSettings: defaultSiteSettings
+            });
+
+            // figure should have margin inlined
+            const figureMatch = result.html.match(/<figure[^>]*style="([^"]*)"[^>]*>/);
+            assert(figureMatch, 'figure should have inline styles');
+            assert(figureMatch[1].includes('margin: 0 0 1.5em'), 'figure should have bottom margin');
+
+            // img should have max-width
+            const imgMatch = result.html.match(/<img[^>]*style="([^"]*)"[^>]*>/);
+            assert(imgMatch, 'img should have inline styles');
+            assert(imgMatch[1].includes('max-width: 100%'), 'img should have max-width: 100%');
+        });
+
+        it('inlines width 100% on button card outer table', async function () {
+            lexicalRenderStub.resolves(`
+                <table class="kg-card kg-button-card" border="0" cellpadding="0" cellspacing="0">
+                    <tbody>
+                        <tr>
+                            <td class="kg-card-spacing">
+                                <table class="btn" border="0" cellspacing="0" cellpadding="0" align="center">
+                                    <tbody>
+                                        <tr>
+                                            <td align="center">
+                                                <a href="https://example.com">Click</a>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            `);
+            const renderer = new MemberWelcomeEmailRenderer({t: key => key});
+
+            const result = await renderer.render({
+                lexical: '{}',
+                subject: 'Welcome!',
+                member: {name: 'John', email: 'john@example.com'},
+                siteSettings: defaultSiteSettings
+            });
+
+            // The outer kg-button-card table should have width: 100% inlined
+            const buttonCardMatch = result.html.match(/<table[^>]*class="kg-card kg-button-card"[^>]*style="([^"]*)"[^>]*>/);
+            assert(buttonCardMatch, 'button card table should have inline styles');
+            assert(buttonCardMatch[1].includes('width: 100%'), 'button card table should have width: 100%');
+        });
+
+        it('preserves explicit right alignment values', async function () {
+            lexicalRenderStub.resolves(`
+                <table class="kg-card kg-button-card" border="0" cellpadding="0" cellspacing="0">
+                    <tbody>
+                        <tr>
+                            <td class="kg-card-spacing">
+                                <table class="btn" border="0" cellspacing="0" cellpadding="0" align="right">
+                                    <tbody>
+                                        <tr>
+                                            <td align="center">
+                                                <a href="https://example.com">Right</a>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            `);
+            const renderer = new MemberWelcomeEmailRenderer({t: key => key});
+
+            const result = await renderer.render({
+                lexical: '{}',
+                subject: 'Welcome!',
+                member: {name: 'John', email: 'john@example.com'},
+                siteSettings: defaultSiteSettings
+            });
+
+            assert.match(result.html, /<table[^>]*class="btn"[^>]*align="right"/);
         });
     });
 });

@@ -1,14 +1,13 @@
 const assert = require('node:assert/strict');
 const {assertExists} = require('../../../../utils/assertions');
-const should = require('should');
 const sinon = require('sinon');
-const _ = require('lodash');
 const hbs = require('../../../../../core/frontend/services/theme-engine/engine');
 const middleware = require('../../../../../core/frontend/services/theme-engine').middleware;
 // is only exposed via themeEngine.getActive()
 const activeTheme = require('../../../../../core/frontend/services/theme-engine/active');
 const settingsCache = require('../../../../../core/shared/settings-cache');
 const customThemeSettingsCache = require('../../../../../core/shared/custom-theme-settings-cache');
+const config = require('../../../../../core/shared/config');
 const labs = require('../../../../../core/shared/labs');
 
 const sandbox = sinon.createSandbox();
@@ -97,8 +96,8 @@ describe('Themes middleware', function () {
             try {
                 assert.equal(err, undefined);
 
-                assert.equal(fakeActiveTheme.mount.called, true);
-                assert.equal(fakeActiveTheme.mount.calledWith(req.app), true);
+                sinon.assert.called(fakeActiveTheme.mount);
+                sinon.assert.calledWith(fakeActiveTheme.mount, req.app);
 
                 done();
             } catch (error) {
@@ -114,7 +113,7 @@ describe('Themes middleware', function () {
             try {
                 assert.equal(err, undefined);
 
-                assert.equal(fakeActiveTheme.mount.called, false);
+                sinon.assert.notCalled(fakeActiveTheme.mount);
 
                 done();
             } catch (error) {
@@ -134,8 +133,8 @@ describe('Themes middleware', function () {
                 assertExists(err);
                 assert.equal(err.message, 'The currently active theme "bacon-sensation" is missing.');
 
-                assert.equal(activeThemeGetStub.called, true);
-                assert.equal(fakeActiveTheme.mount.called, false);
+                sinon.assert.called(activeThemeGetStub);
+                sinon.assert.notCalled(fakeActiveTheme.mount);
 
                 done();
             } catch (error) {
@@ -152,16 +151,21 @@ describe('Themes middleware', function () {
                 try {
                     assert.equal(err, undefined);
 
-                    assert.equal(hbsUpdateTemplateOptionsStub.calledOnce, true);
+                    sinon.assert.calledOnce(hbsUpdateTemplateOptionsStub);
                     const templateOptions = hbsUpdateTemplateOptionsStub.firstCall.args[0];
                     const data = templateOptions.data;
 
-                    data.should.be.an.Object().with.properties('site', 'labs', 'config', 'custom');
+                    assert(data && typeof data === 'object');
+                    assert('site' in data);
+                    assert('labs' in data);
+                    assert('config' in data);
+                    assert('custom' in data);
 
                     // Check Theme Config
-                    data.config.should.be.an.Object()
-                        .with.properties(themeDataExpectedProps)
-                        .and.size(themeDataExpectedProps.length);
+                    assert(data.config && typeof data.config === 'object');
+                    assert('posts_per_page' in data.config);
+                    assert('image_sizes' in data.config);
+                    assert.equal(Object.keys(data.config).length, themeDataExpectedProps.length);
                     // posts per page should be set according to the stub
                     assert.equal(data.config.posts_per_page, 2);
 
@@ -197,7 +201,7 @@ describe('Themes middleware', function () {
                     const data = templateOptions.data;
 
                     assertExists(data.site.signup_url);
-                    assert.equal(data.site.signup_url, 'https://feedly.com/i/subscription/feed/http%3A%2F%2F127.0.0.1%3A2369%2Frss%2F');
+                    assert.equal(data.site.signup_url, `https://feedly.com/i/subscription/feed/${encodeURIComponent(config.get('url') + '/rss/')}`);
 
                     done();
                 } catch (error) {
@@ -218,14 +222,11 @@ describe('Themes middleware', function () {
                 try {
                     assert.equal(err, undefined);
 
-                    assert.equal(hbsUpdateLocalTemplateOptionsStub.calledOnce, true);
+                    sinon.assert.calledOnce(hbsUpdateLocalTemplateOptionsStub);
                     const templateOptions = hbsUpdateLocalTemplateOptionsStub.firstCall.args[1];
                     const data = templateOptions.data;
 
-                    data.should.be.an.Object().with.properties('site');
-
-                    data.site.should.be.an.Object().with.properties('accent_color', '_preview');
-                    data.site._preview.should.eql(previewString);
+                    assert.equal(data.site._preview, previewString);
                     assert.equal(data.site.accent_color, '#000fff');
 
                     done();
@@ -245,14 +246,11 @@ describe('Themes middleware', function () {
                 try {
                     assert.equal(err, undefined);
 
-                    assert.equal(hbsUpdateLocalTemplateOptionsStub.calledOnce, true);
+                    sinon.assert.calledOnce(hbsUpdateLocalTemplateOptionsStub);
                     const templateOptions = hbsUpdateLocalTemplateOptionsStub.firstCall.args[1];
                     const data = templateOptions.data;
 
-                    data.should.be.an.Object().with.properties('site');
-
-                    data.site.should.be.an.Object().with.properties('accent_color', 'icon', '_preview');
-                    data.site._preview.should.eql(previewString);
+                    assert.equal(data.site._preview, previewString);
                     assert.equal(data.site.accent_color, '#000fff');
                     assert.equal(data.site.icon, '/content/images/myimg.png');
 
@@ -274,13 +272,12 @@ describe('Themes middleware', function () {
                 try {
                     assert.equal(err, undefined);
 
-                    assert.equal(hbsUpdateLocalTemplateOptionsStub.calledOnce, true);
+                    sinon.assert.calledOnce(hbsUpdateLocalTemplateOptionsStub);
                     const templateOptions = hbsUpdateLocalTemplateOptionsStub.firstCall.args[1];
                     const data = templateOptions.data;
 
-                    data.should.be.an.Object().with.properties('site', 'custom');
-
-                    data.custom.should.be.an.Object().with.properties('header_typography');
+                    assert(data && typeof data === 'object');
+                    assert('site' in data);
                     assert.equal(data.custom.header_typography, 'Serif');
 
                     done();
@@ -301,13 +298,14 @@ describe('Themes middleware', function () {
                 try {
                     assert.equal(err, undefined);
 
-                    assert.equal(hbsUpdateLocalTemplateOptionsStub.calledOnce, true);
+                    sinon.assert.calledOnce(hbsUpdateLocalTemplateOptionsStub);
                     const templateOptions = hbsUpdateLocalTemplateOptionsStub.firstCall.args[1];
                     const data = templateOptions.data;
 
-                    data.should.be.an.Object().with.properties('site', 'custom');
+                    assert(data && typeof data === 'object');
+                    assert('site' in data);
+                    assert('custom' in data);
 
-                    data.custom.should.be.an.Object().with.properties('header_typography');
                     assert.equal(data.custom.header_typography, 'Serif');
 
                     assert(!('unknown_setting' in data.custom));
@@ -329,14 +327,13 @@ describe('Themes middleware', function () {
                 try {
                     assert.equal(err, undefined);
 
-                    assert.equal(hbsUpdateLocalTemplateOptionsStub.calledOnce, true);
+                    sinon.assert.calledOnce(hbsUpdateLocalTemplateOptionsStub);
                     const templateOptions = hbsUpdateLocalTemplateOptionsStub.firstCall.args[1];
                     const data = templateOptions.data;
 
-                    data.should.be.an.Object().with.properties('site', 'custom');
-
-                    assert(_.isPlainObject(data.custom));
-                    data.custom.should.be.empty();
+                    assert(data && typeof data === 'object');
+                    assert('site' in data);
+                    assert.deepEqual(data.custom, {});
 
                     done();
                 } catch (error) {
@@ -355,14 +352,13 @@ describe('Themes middleware', function () {
                 try {
                     assert.equal(err, undefined);
 
-                    assert.equal(hbsUpdateLocalTemplateOptionsStub.calledOnce, true);
+                    sinon.assert.calledOnce(hbsUpdateLocalTemplateOptionsStub);
                     const templateOptions = hbsUpdateLocalTemplateOptionsStub.firstCall.args[1];
                     const data = templateOptions.data;
 
-                    data.should.be.an.Object().with.properties('site', 'custom');
-
-                    assert(_.isPlainObject(data.custom));
-                    data.custom.should.be.empty();
+                    assert(data && typeof data === 'object');
+                    assert('site' in data);
+                    assert.deepEqual(data.custom, {});
 
                     done();
                 } catch (error) {

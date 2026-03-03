@@ -1,7 +1,6 @@
 const assert = require('node:assert/strict');
 const {assertExists} = require('../../../../utils/assertions');
 const sinon = require('sinon');
-const should = require('should');
 const rewire = require('rewire');
 const StripeAPI = rewire('../../../../../core/server/services/stripe/stripe-api');
 
@@ -376,7 +375,7 @@ describe('StripeAPI', function () {
         it('cancels a subscription trial', async function () {
             const result = await api.cancelSubscriptionTrial(mockSubscription.id);
 
-            assert.equal(mockStripe.subscriptions.update.callCount, 1);
+            sinon.assert.calledOnce(mockStripe.subscriptions.update);
 
             assert.equal(mockStripe.subscriptions.update.args[0][0], mockSubscription.id);
             assert.deepEqual(mockStripe.subscriptions.update.args[0][1], {trial_end: 'now'});
@@ -416,7 +415,7 @@ describe('StripeAPI', function () {
         it('adds a coupon to a subscription', async function () {
             const result = await api.addCouponToSubscription('sub_123', 'coupon_abc');
 
-            assert.equal(mockStripe.subscriptions.update.callCount, 1);
+            sinon.assert.calledOnce(mockStripe.subscriptions.update);
             assert.equal(mockStripe.subscriptions.update.args[0][0], 'sub_123');
             assert.deepEqual(mockStripe.subscriptions.update.args[0][1], {coupon: 'coupon_abc'});
 

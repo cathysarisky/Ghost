@@ -45,10 +45,10 @@ const PaidAccountActions = () => {
         let oldPriceClassName = '';
 
         const hasFreeTrial = subscriptionHasFreeTrial({sub: subscription});
+
         if (hasFreeTrial) {
             oldPriceClassName = 'gh-portal-account-old-price';
-        }
-        if (hasFreeTrial) {
+
             return (
                 <>
                     <p className={oldPriceClassName}>
@@ -60,9 +60,11 @@ const PaidAccountActions = () => {
         }
 
         let offerLabelStr = getOfferLabel({nextPayment});
+
         if (offerLabelStr) {
             oldPriceClassName = 'gh-portal-account-old-price';
         }
+
         const OfferLabel = () => {
             if (offerLabelStr) {
                 return (

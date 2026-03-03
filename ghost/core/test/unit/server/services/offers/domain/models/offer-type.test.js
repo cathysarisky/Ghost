@@ -1,11 +1,10 @@
 const assert = require('node:assert/strict');
-const should = require('should');
 
 const OfferType = require('../../../../../../../core/server/services/offers/domain/models/offer-type');
 
 describe('OfferType', function () {
     describe('OfferType.create factory', function () {
-        it('Creates an Offer type containing either "fixed" or "percent"', function () {
+        it('Creates an Offer type containing either "fixed", "percent" or "trial"', function () {
             OfferType.create('fixed');
             OfferType.create('percent');
             OfferType.create('trial');
@@ -14,20 +13,14 @@ describe('OfferType', function () {
                 OfferType.create('other');
                 assert.fail();
             } catch (err) {
-                should.ok(
-                    err instanceof OfferType.InvalidOfferType,
-                    'expected an InvalidOfferType error'
-                );
+                assert(err instanceof OfferType.InvalidOfferType, 'expected an InvalidOfferType error');
             }
 
             try {
                 OfferType.create();
                 assert.fail();
             } catch (err) {
-                should.ok(
-                    err instanceof OfferType.InvalidOfferType,
-                    'expected an InvalidOfferType error'
-                );
+                assert(err instanceof OfferType.InvalidOfferType, 'expected an InvalidOfferType error');
             }
         });
     });

@@ -10,6 +10,7 @@ const iconv = require('iconv-lite');
 const path = require('path');
 
 // Some sites block non-standard user agents so we need to mimic a typical browser
+// Note: the Ghost/5.0 string _may_ be in use by 3rd parties so use caution when updating across majors
 const USER_AGENT = 'Mozilla/5.0 (compatible; Ghost/5.0; +https://ghost.org/)';
 
 const messages = {
@@ -99,6 +100,7 @@ class OEmbedService {
 
     /**
      * @param {string} url
+     * @returns {Promise<never>}
      */
     async unknownProvider(url) {
         throw new errors.ValidationError({
