@@ -9,7 +9,7 @@ export default class LabelsManagerService extends Service {
     @service store;
 
     @tracked _labels = new TrackedArray();
-    _meta = null;
+    @tracked _meta = null;
 
     get labels() {
         return this.sortLabels(this._labels);
@@ -26,7 +26,7 @@ export default class LabelsManagerService extends Service {
     sortLabels(labels = []) {
         return labels
             .filter(label => label.get('id') !== null)
-            .sort((labelA, labelB) => (labelA.name || '').localeCompare((labelB.name || ''), undefined, {ignorePunctuation: true}));
+            .sort((labelA, labelB) => (labelA.name || '').localeCompare((labelB.name || '')));
     }
 
     findBySlug(slug) {
@@ -53,7 +53,7 @@ export default class LabelsManagerService extends Service {
 
     @task({drop: true})
     *loadMoreTask() {
-        if (this._meta?.pagination && this._meta.pagination.pages <= this._meta.pagination.page) {
+        if (this._meta?.pagination && parseInt(this._meta.pagination.pages, 10) <= parseInt(this._meta.pagination.page, 10)) {
             return;
         }
 
@@ -74,6 +74,12 @@ export default class LabelsManagerService extends Service {
     *searchLabelsTask(term, {page = 1} = {}) {
         yield timeout(250);
         const safeTerm = term.replace(/'/g, `\\'`);
-        return yield this.store.query('label', {filter: `name:~'${safeTerm}'`, limit: PAGE_SIZE, page, order: 'name asc'});
+        const labels = yield this.store.query('label', {filter: `name:~'${safeTerm}'`, limit: PAGE_SIZE, page, order: 'name asc'});
+
+        // Register search results so they can be resolved by findBySlug/selectedOptions
+        // even if they weren't in the initially paginated set
+        labels.forEach(label => this.addLabel(label));
+
+        return labels;
     }
 }
