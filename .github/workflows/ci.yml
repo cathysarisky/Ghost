@@ -21,6 +21,12 @@ env:
     ~/.cache/ms-playwright/
   NX_REJECT_UNKNOWN_LOCAL_CACHE: 0
   NODE_VERSION: 22.18.0
+  # Disable v8-compile-cache to prevent intermittent V8 deserializer crashes
+  # when multiple parallel Nx workers race to read/write shared bytecode cache
+  # files. The cache lives in /tmp and is discarded after each run anyway,
+  # so disabling it has no meaningful performance impact in CI.
+  # See: https://github.com/nodejs/node/issues/51555
+  DISABLE_V8_COMPILE_CACHE: 1
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -454,6 +460,7 @@ jobs:
           FORCE_COLOR: 0
           GHOST_UNIT_TEST_VARIANT: ci
           NX_SKIP_LOG_GROUPING: true
+          logging__level: fatal
 
       - uses: actions/upload-artifact@v4
         if: matrix.node == env.NODE_VERSION
@@ -933,7 +940,14 @@ jobs:
           DEPENDENCY_CACHE_KEY: ${{ needs.job_setup.outputs.dependency_cache_key }}
 
       - name: Build server and admin assets
-        run: yarn build:production
+        run: |
+          PKG_VERSION=$(node -p "require('./ghost/core/package.json').version")
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          if [ "${{ github.ref_type }}" != "tag" ]; then
+            export GHOST_BUILD_VERSION="${PKG_VERSION}+${SHORT_SHA}"
+            echo "GHOST_BUILD_VERSION=${GHOST_BUILD_VERSION}" >> $GITHUB_ENV
+          fi
+          yarn build:production
 
       - name: Pack standalone distribution
         run: yarn workspace ghost pack:standalone
@@ -944,23 +958,39 @@ jobs:
       - name: Determine push strategy
         id: strategy
         run: |
-          # Use artifact-based image transfer (instead of GHCR) for fork PRs
-          # and non-main repos (e.g. Ghost-Security)
+          # Same-org repos (e.g. TryGhost/Ghost, TryGhost/Ghost-Security) push to GHCR.
+          # External forks and cross-repo PRs use artifact-based image transfer instead.
           USE_ARTIFACT="false"
-          if [ "${{ github.repository }}" != "TryGhost/Ghost" ]; then
+          if [ "${{ github.repository_owner }}" != "TryGhost" ]; then
+            # External fork — no GHCR push
             USE_ARTIFACT="true"
           elif [ "${{ github.event_name }}" = "pull_request" ] && \
                [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
+            # Cross-repo PR (fork PR into this repo) — no GHCR push
             USE_ARTIFACT="true"
           fi
+
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+
+          # Derive GHCR image names from repository name so each repo gets its own namespace
+          # TryGhost/Ghost → ghost-core / ghost, TryGhost/Ghost-Security → ghost-security-core / ghost-security
+          REPO_NAME=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+          if [ "$REPO_NAME" = "ghost" ]; then
+            IMAGE_CORE_NAME="ghcr.io/${OWNER}/ghost-core"
+            IMAGE_FULL_NAME="ghcr.io/${OWNER}/ghost"
+          else
+            IMAGE_CORE_NAME="ghcr.io/${OWNER}/${REPO_NAME}-core"
+            IMAGE_FULL_NAME="ghcr.io/${OWNER}/${REPO_NAME}"
+          fi
+
           echo "use-artifact=$USE_ARTIFACT" >> $GITHUB_OUTPUT
           echo "should-push=$( [ "$USE_ARTIFACT" = "false" ] && echo "true" || echo "false" )" >> $GITHUB_OUTPUT
           echo "owner=$OWNER" >> $GITHUB_OUTPUT
+          echo "image-core-name=$IMAGE_CORE_NAME" >> $GITHUB_OUTPUT
+          echo "image-full-name=$IMAGE_FULL_NAME" >> $GITHUB_OUTPUT
 
       - name: Upload admin artifact for CD
         id: upload-admin
-        if: steps.strategy.outputs.use-artifact == 'false'
         uses: actions/upload-artifact@v4
         with:
           name: admin-build-cd
@@ -983,7 +1013,7 @@ jobs:
         id: meta-core
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ steps.strategy.outputs.owner }}/ghost-core
+          images: ${{ steps.strategy.outputs.image-core-name }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -998,7 +1028,7 @@ jobs:
         id: meta-full
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ steps.strategy.outputs.owner }}/ghost
+          images: ${{ steps.strategy.outputs.image-full-name }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -1015,13 +1045,15 @@ jobs:
           context: /tmp/ghost-production
           file: Dockerfile.production
           target: core
-          build-args: NODE_VERSION=${{ env.NODE_VERSION }}
+          build-args: |
+            NODE_VERSION=${{ env.NODE_VERSION }}
+            GHOST_BUILD_VERSION=${{ env.GHOST_BUILD_VERSION }}
           push: ${{ steps.strategy.outputs.should-push }}
           load: ${{ steps.strategy.outputs.should-push == 'false' }}
           tags: ${{ steps.meta-core.outputs.tags }}
           labels: ${{ steps.meta-core.outputs.labels }}
-          cache-from: type=registry,ref=ghcr.io/${{ steps.strategy.outputs.owner }}/ghost-core:cache-main
-          cache-to: ${{ steps.strategy.outputs.should-push == 'true' && format('type=registry,ref=ghcr.io/{0}/ghost-core:cache-{1},mode=max', steps.strategy.outputs.owner, github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'main') || '' }}
+          cache-from: type=registry,ref=${{ steps.strategy.outputs.image-core-name }}:cache-main
+          cache-to: ${{ steps.strategy.outputs.should-push == 'true' && format('type=registry,ref={0}:cache-{1},mode=max', steps.strategy.outputs.image-core-name, github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'main') || '' }}
 
       - name: Build & push full image
         uses: docker/build-push-action@v6
@@ -1029,16 +1061,17 @@ jobs:
           context: /tmp/ghost-production
           file: Dockerfile.production
           target: full
-          build-args: NODE_VERSION=${{ env.NODE_VERSION }}
+          build-args: |
+            NODE_VERSION=${{ env.NODE_VERSION }}
+            GHOST_BUILD_VERSION=${{ env.GHOST_BUILD_VERSION }}
           push: ${{ steps.strategy.outputs.should-push }}
           load: true
           tags: ${{ steps.meta-full.outputs.tags }}
           labels: ${{ steps.meta-full.outputs.labels }}
-          cache-from: type=registry,ref=ghcr.io/${{ steps.strategy.outputs.owner }}/ghost:cache-main
-          cache-to: ${{ steps.strategy.outputs.should-push == 'true' && format('type=registry,ref=ghcr.io/{0}/ghost:cache-{1},mode=max', steps.strategy.outputs.owner, github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'main') || '' }}
+          cache-from: type=registry,ref=${{ steps.strategy.outputs.image-full-name }}:cache-main
+          cache-to: ${{ steps.strategy.outputs.should-push == 'true' && format('type=registry,ref={0}:cache-{1},mode=max', steps.strategy.outputs.image-full-name, github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'main') || '' }}
 
-      - name: Save full image as artifact (no GHCR push)
-        if: steps.strategy.outputs.use-artifact == 'true'
+      - name: Save full image as artifact
         run: |
           IMAGE_TAG=$(echo "${{ steps.meta-full.outputs.tags }}" | head -n1)
           echo "Saving image: $IMAGE_TAG"
@@ -1046,8 +1079,7 @@ jobs:
           echo "Image saved as docker-image-production.tar.gz"
           ls -lh docker-image-production.tar.gz
 
-      - name: Upload image artifact (no GHCR push)
-        if: steps.strategy.outputs.use-artifact == 'true'
+      - name: Upload image artifact
         uses: actions/upload-artifact@v4
         with:
           name: docker-image-production
@@ -1114,25 +1146,26 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        shardIndex: [1, 2, 3, 4]
-        shardTotal: [4]
+        shardIndex: [1, 2, 3, 4, 5, 6, 7, 8]
+        shardTotal: [8]
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
-        # TODO: Build tb-cli in a separate workflow and pull from GHCR instead of building here
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Tinybird CLI Image
-        uses: docker/build-push-action@v6
-        id: build
-        with:
-          context: .
-          file: docker/tb-cli/Dockerfile
-          push: false
-          load: true
-          tags: ghost-tb-cli
+      - name: Pull or build Tinybird CLI Image
+        run: |
+          COMPOSE_IMAGE="${COMPOSE_PROJECT_NAME:-ghost-dev}-tb-cli"
+          # Try pulling pre-built image from GHCR first (fast path)
+          if docker pull ghcr.io/tryghost/tb-cli:latest 2>/dev/null; then
+            echo "Pulled tb-cli from GHCR"
+            docker tag ghcr.io/tryghost/tb-cli:latest "$COMPOSE_IMAGE"
+          else
+            echo "GHCR image not available, building from source"
+            docker buildx build --load -t "$COMPOSE_IMAGE" -f docker/tb-cli/Dockerfile .
+          fi
 
       - name: Load Image
         uses: ./.github/actions/load-docker-image
@@ -1541,7 +1574,7 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       always()
-      && github.repository == 'TryGhost/Ghost'
+      && github.repository_owner == 'TryGhost'
       && needs.job_setup.result == 'success'
       && needs.job_docker_build_production.result == 'success'
       && needs.job_docker_build_production.outputs.use-artifact != 'true'
@@ -1580,6 +1613,7 @@ jobs:
           client-payload: >-
             {
               "ref": "${{ github.sha }}",
+              "source_repo": "${{ github.repository }}",
               "pr_number": "${{ steps.params.outputs.pr_number }}",
               "deploy": "${{ steps.params.outputs.deploy }}",
               "admin_artifact_id": "${{ needs.job_docker_build_production.outputs.admin-artifact-id }}",

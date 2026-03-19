@@ -48,10 +48,11 @@ const PRIVATE_FEATURES = [
     'themeTranslation',
     'indexnow',
     'transistor',
-    'retentionOffers',
+    'verificationFlow',
     'membersForward',
     'welcomeEmailsDesignCustomization',
-    'pictureImageFormats'
+    'pictureImageFormats',
+    'smarterCounts'
 ];
 
 module.exports.GA_KEYS = [...GA_FEATURES];

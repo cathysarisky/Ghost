@@ -52,9 +52,9 @@ const features: Feature[] = [{
     description: 'Enable Transistor podcast integration',
     flag: 'transistor'
 }, {
-    title: 'Retention Offers',
-    description: 'Enable retention offers for canceling members',
-    flag: 'retentionOffers'
+    title: 'Verification flow',
+    description: 'Enable new Email verification webhook-based flow',
+    flag: 'verificationFlow'
 }, {
     title: 'Members Forward',
     description: 'Use the new React-based members list instead of the Ember implementation',
@@ -67,6 +67,10 @@ const features: Feature[] = [{
     title: 'Picture Element',
     description: 'Use the HTML picture element to serve modern image formats (AVIF, WebP) with automatic fallbacks',
     flag: 'pictureImageFormats'
+}, {
+    title: 'Smarter Counts',
+    description: 'Use optimized COUNT queries for API pagination when safe',
+    flag: 'smarterCounts'
 }];
 
 const AlphaFeatures: React.FC = () => {
