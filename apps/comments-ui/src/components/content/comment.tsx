@@ -2,6 +2,7 @@ import EditForm from './forms/edit-form';
 import LikeButton from './buttons/like-button';
 import LikeCount from './buttons/like-count';
 import MoreButton from './buttons/more-button';
+import PlusBadge from './badge/plus-badge';
 import React, {useCallback} from 'react';
 import Replies, {RepliesProps} from './replies';
 import ReplyButton from './buttons/reply-button';
@@ -206,8 +207,13 @@ const UnpublishedComment: React.FC<UnpublishedCommentProps> = ({comment, openEdi
 
 const MemberExpertise: React.FC<{comment: Comment}> = ({comment}) => {
     const {member} = useAppContext();
-    const memberExpertise = member && comment.member && comment.member.uuid === member.uuid ? member.expertise : comment?.member?.expertise;
-
+    //const memberExpertise = member && comment.member && comment.member.uuid === member.uuid ? member.expertise : comment?.member?.expertise;
+    let memberExpertise = '';
+    if (member && comment.member && comment.member.uuid === member.uuid) {
+        memberExpertise = member.expertise?.split('||')[1] || '';
+    } else if (comment?.member?.expertise) {
+        memberExpertise = comment.member.expertise?.split('||')[1] || '';
+    }
     if (!memberExpertise) {
         return null;
     }
@@ -261,9 +267,10 @@ const ReplyFormBox: React.FC<ReplyFormBoxProps> = ({comment, openForm}) => {
 const AuthorName: React.FC<{comment: Comment}> = ({comment}) => {
     const {t} = useAppContext();
     const name = getMemberNameFromComment(comment, t);
+    const badge = comment.member?.expertise?.split('||')[0] === '1' ? <PlusBadge /> : '';
     return (
-        <h4 className="font-sans text-base font-bold leading-snug text-neutral-900 sm:text-sm dark:text-white/85">
-            {name}
+        <h4 className="flex font-sans text-base font-bold leading-snug text-neutral-900 sm:text-sm dark:text-white/85">
+            {name} {badge}
         </h4>
     );
 };
@@ -300,7 +307,14 @@ type CommentHeaderProps = {
 const CommentHeader: React.FC<CommentHeaderProps> = ({comment, className = ''}) => {
     const {member, t, pageUrl} = useAppContext();
     const createdAtRelative = useRelativeTime(comment.created_at);
-    const memberExpertise = member && comment.member && comment.member.uuid === member.uuid ? member.expertise : comment?.member?.expertise;
+    let memberExpertise = '';
+    if (member && comment.member && comment.member.uuid === member.uuid) {
+        memberExpertise = member.expertise?.split('||')[1] || '';
+    } else if (comment?.member?.expertise) {
+        memberExpertise = comment.member.expertise?.split('||')[1] || '';
+    }
+
+    //const memberExpertise = member && comment.member && comment.member.uuid === member.uuid ? member.expertise : comment?.member?.expertise;
     const isReplyToReply = comment.in_reply_to_id && comment.in_reply_to_snippet;
 
     const timestampElement = (

@@ -23,7 +23,7 @@ const ContentBox: React.FC<Props> = ({done}) => {
         const darkest = Math.min(lum1, lum2);
         return (brightest + 0.05) / (darkest + 0.05);
     };
-    const {accentColor, colorScheme} = useAppContext();
+    const {colorScheme} = useAppContext();
 
     const darkMode = useCallback(() => {
         if (colorScheme === 'light') {
@@ -72,7 +72,7 @@ const ContentBox: React.FC<Props> = ({done}) => {
     }, [darkMode]);
 
     const style = {
-        '--gh-accent-color': accentColor ?? 'black',
+        '--gh-accent-color': '#29A6C9',
         paddingTop: 0,
         paddingBottom: 24 // remember to allow for bottom shadow on comment text box
     };

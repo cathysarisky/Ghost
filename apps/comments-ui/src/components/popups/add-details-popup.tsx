@@ -1,4 +1,5 @@
 import CloseButton from './close-button';
+import PlusBadge from '../content/badge/plus-badge';
 import reactStringReplace from 'react-string-replace';
 import {Transition} from '@headlessui/react';
 import {isMobile} from '../../utils/helpers';
@@ -12,15 +13,19 @@ type Props = {
 const AddDetailsPopup = (props: Props) => {
     const inputNameRef = useRef<HTMLInputElement>(null);
     const inputExpertiseRef = useRef<HTMLInputElement>(null);
-    const {dispatchAction, member, accentColor, t} = useAppContext();
+    const {dispatchAction, member, t} = useAppContext();
 
     const [name, setName] = useState(member.name ?? '');
-    const [expertise, setExpertise] = useState(member.expertise ?? '');
+    let revisedExpertise = '';
+    if (member && member.expertise) {
+        revisedExpertise = member.expertise.split('||')[1];
+    }
+    const [expertise, setExpertise] = useState(revisedExpertise ?? '');
 
-    const maxExpertiseChars = 50;
+    const maxExpertiseChars = 40;
     let initialExpertiseChars = maxExpertiseChars;
-    if (member.expertise) {
-        initialExpertiseChars -= member.expertise.length;
+    if (revisedExpertise) {
+        initialExpertiseChars -= revisedExpertise.length;
     }
     const [expertiseCharsLeft, setExpertiseCharsLeft] = useState(initialExpertiseChars);
 
@@ -36,10 +41,23 @@ const AddDetailsPopup = (props: Props) => {
     };
 
     const submit = async () => {
+        // Check if the member has a plus tier subscription and add badge if they do
+        let finalExpertise = '0||';
+        if (member && member.subscriptions && member.subscriptions.length > 0) {
+            // Check if any subscription has a tier that indicates plus membership
+            const hasPlusTier = member.subscriptions.some((subscription: any) => subscription.tier && 
+                (subscription.tier.name?.toLowerCase().includes('plus'))
+            );
+            if (hasPlusTier) {
+                finalExpertise = `1||${expertise || ''}`;
+            } else {
+                finalExpertise = `0||${expertise || ''}`;
+            }
+        }
         if (name.trim() !== '') {
             await dispatchAction('updateMember', {
                 name,
-                expertise
+                expertise: finalExpertise
             });
             close(true);
         } else {
@@ -67,7 +85,7 @@ const AddDetailsPopup = (props: Props) => {
     }, [inputNameRef, inputExpertiseRef, props.expertiseAutofocus]);
 
     const renderExampleProfiles = () => {
-        const renderEl = (profile: {name: string, avatar: string, expertise: string}) => {
+        const renderEl = (profile: {name: string, avatar: string, expertise: string, isPlus: boolean}) => {
             return (
                 <Transition
                     key={profile.name}
@@ -80,10 +98,10 @@ const AddDetailsPopup = (props: Props) => {
                     appear
                 >
                     <div className="flex flex-row items-center justify-start gap-3 pr-4">
-                        <div className="size-10 rounded-full border-2 border-white bg-cover bg-no-repeat" style={{backgroundImage: `url(${profile.avatar})`}} />
-                        <div className="flex flex-col items-start justify-center">
-                            <div className="font-sans text-base font-semibold tracking-tight text-white">
-                                {profile.name}
+                        <div className="size-10 flex-none rounded-full border-2 border-white bg-[#0C313B] bg-cover bg-no-repeat" style={{backgroundImage: `url(${profile.avatar})`}} />
+                        <div className="flex min-w-0 flex-col items-start justify-center">
+                            <div className="flex font-sans text-base font-semibold tracking-tight text-white">
+                                {profile.name} {profile.isPlus && <PlusBadge />}
                             </div>
                             <div className="font-sans text-sm tracking-tight text-neutral-400">
                                 {profile.expertise}
@@ -98,10 +116,10 @@ const AddDetailsPopup = (props: Props) => {
 
         // using URLS over real images for avatars as serving JPG images was not optimal (based on discussion with team)
         const exampleProfiles = [
-            {avatar: 'https://randomuser.me/api/portraits/men/32.jpg', name: 'James Fletcher', expertise: t('Full-time parent')},
-            {avatar: 'https://randomuser.me/api/portraits/women/30.jpg', name: 'Naomi Schiff', expertise: t('Founder @ Acme Inc')},
-            {avatar: 'https://randomuser.me/api/portraits/men/4.jpg', name: 'Franz Tost', expertise: t('Neurosurgeon')},
-            {avatar: 'https://randomuser.me/api/portraits/women/51.jpg', name: 'Katrina Klosp', expertise: t('Local resident')}
+            {avatar: '/assets/images/person1.png', name: t('person1name'), expertise: t('person1expertise'), isPlus: true},
+            {avatar: '/assets/images/person2.png', name: t('person2name'), expertise: t('person2expertise'), isPlus: false},
+            {avatar: '/assets/images/person3.png', name: t('person3name'), expertise: t('person3expertise'), isPlus: true},
+            {avatar: '/assets/images/person4.png', name: t('person4name'), expertise: t('person4expertise'), isPlus: false}
         ];
 
         for (let i = 0; i < exampleProfiles.length; i++) {
@@ -173,7 +191,7 @@ const AddDetailsPopup = (props: Props) => {
                             id="comments-expertise"
                             maxLength={maxExpertiseChars}
                             name="expertise"
-                            placeholder={t('Head of Marketing at Acme, Inc')}
+                            placeholder={t('person3expertise')}
                             type="text"
                             value={expertise}
                             onChange={(e) => {
@@ -192,7 +210,7 @@ const AddDetailsPopup = (props: Props) => {
                         <button
                             className={`text-md mt-10 flex h-[42px] w-full items-center justify-center rounded-md px-8 font-sans font-semibold text-white opacity-100 transition-opacity duration-200 ease-linear hover:opacity-90`}
                             data-testid="save-button"
-                            style={{backgroundColor: accentColor ?? '#000000'}}
+                            style={{backgroundColor: '#29A6C9'}}
                             type="button"
                             onClick={() => {
                                 // eslint-disable-next-line no-console

@@ -31,12 +31,12 @@ body {
 .gh-comment-content a {
     word-break: break-word;
     text-decoration: underline;
-    color: var(--gh-accent-color);
+    color: #29A6C9 !important;
 }
 
 /* Blockquotes */
 .gh-comment-content blockquote {
-    border-left: 3px solid var(--gh-accent-color);
+    border-left: 3px solid #29A6C9 !important;
     padding-left: 1rem;
     margin: 0 0 1.2rem;
 }

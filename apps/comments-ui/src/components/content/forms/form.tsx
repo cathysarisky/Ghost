@@ -144,7 +144,7 @@ export const FormEditor: React.FC<FormEditorProps> = ({comment, submit, progress
                     <button className="ml-2.5 font-sans text-sm font-medium text-neutral-900/50 outline-0 transition-all hover:text-neutral-900/70 dark:text-white/60 dark:hover:text-white/75" type="button" onClick={close}>{t('Cancel')}</button>
                 }
                 <button
-                    className={`flex w-auto items-center justify-center ${submitSize === 'medium' && 'sm:min-w-[100px]'} ${submitSize === 'small' && 'sm:min-w-[64px]'} h-[40px] rounded-md bg-[var(--gh-accent-color)] px-3 py-2 text-center font-sans text-base font-medium text-white outline-0 transition-colors duration-200 hover:brightness-105 disabled:bg-black/5 disabled:text-neutral-900/30 sm:text-sm dark:disabled:bg-white/15 dark:disabled:text-white/35`}
+                    className={`flex w-auto items-center justify-center ${submitSize === 'medium' && 'sm:min-w-[100px]'} ${submitSize === 'small' && 'sm:min-w-[64px]'} h-[40px] rounded-md bg-[#29A6C9] px-3 py-2 text-center font-sans text-base font-medium text-white outline-0 transition-colors duration-200 hover:brightness-105 disabled:bg-black/5 disabled:text-neutral-900/30 sm:text-sm dark:disabled:bg-white/15 dark:disabled:text-white/35`}
                     data-testid="submit-form-button"
                     disabled={!editor || editor.isEmpty}
                     type="button"
@@ -304,10 +304,8 @@ const FormWrapper: React.FC<FormWrapperProps> = ({
     children
 }) => {
     const {member, dispatchAction} = useAppContext();
-
     const memberName = member?.name;
-    const memberExpertise = member?.expertise;
-
+    const memberExpertise = member?.expertise?.split('||')[1] || '';
     let openStyles = '';
     if (isOpen) {
         const isReplyToReply = !!openForm?.in_reply_to_snippet;

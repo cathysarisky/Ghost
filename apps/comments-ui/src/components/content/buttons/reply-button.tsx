@@ -8,7 +8,7 @@ type Props = {
 };
 
 const ReplyButton: React.FC<Props> = ({disabled, isReplying, openReplyForm}) => {
-    const {t, dispatchAction, isMember, hasRequiredTier} = useAppContext();
+    const {t, dispatchAction, isMember, hasRequiredTier, institutional} = useAppContext();
 
     const canReply = isMember && hasRequiredTier;
 
@@ -21,6 +21,10 @@ const ReplyButton: React.FC<Props> = ({disabled, isReplying, openReplyForm}) => 
         }
         openReplyForm();
     };
+
+    if (institutional) {
+        return null;
+    }
 
     return (
         <button
