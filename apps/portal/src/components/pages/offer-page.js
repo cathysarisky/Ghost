@@ -1,7 +1,7 @@
 import React from 'react';
 import ActionButton from '../common/action-button';
 import AppContext from '../../app-context';
-import {ReactComponent as CheckmarkIcon} from '../../images/icons/checkmark.svg';
+import CheckmarkIcon from '../../images/icons/checkmark.svg?react';
 import CloseButton from '../common/close-button';
 import InputForm from '../common/input-form';
 import {getCurrencySymbol, getProductFromId, hasMultipleProductsFeature, getUpdatedOfferPrice, formatNumber, hasMultipleNewsletters} from '../../utils/helpers';
@@ -470,7 +470,7 @@ export default class OfferPage extends React.Component {
         const benefitsUI = benefits.map((benefit, idx) => {
             return (
                 <div className="gh-portal-product-benefit" key={`${benefit.name}-${idx}`}>
-                    <CheckmarkIcon className='gh-portal-benefit-checkmark' />
+                    <CheckmarkIcon className='gh-portal-benefit-checkmark' aria-hidden='true' />
                     <div className="gh-portal-benefit-title">{benefit.name}</div>
                 </div>
             );

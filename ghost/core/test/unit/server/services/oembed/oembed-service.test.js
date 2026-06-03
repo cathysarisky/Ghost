@@ -9,7 +9,7 @@ describe('oembed-service', function () {
     /** @type {OembedService} */
     let oembedService;
 
-    before(function () {
+    beforeAll(function () {
         oembedService = new OembedService({
             config: {get() {
                 return true;
@@ -262,9 +262,11 @@ describe('oembed-service', function () {
     });
 
     describe('processImageFromUrl', function () {
-        it('stores downloaded bookmark assets via image storage and returns stored URL', async function () {
-            const saveRaw = sinon.stub().resolves('https://storage.ghost.is/c/6f/a3/site/content/images/thumbnail/sample.png');
-            const generateUnique = sinon.stub().resolves('/tmp/content/images/thumbnail/sample.png');
+        const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
+
+        it('stores downloaded bookmark assets via image storage and returns the adapter URL', async function () {
+            const imageBytes = Buffer.from('img-bytes');
+            const saveRaw = sinon.stub().resolves('https://storage.ghost.is/c/6f/a3/site/content/images/thumbnail/sample-x.png');
             const getSanitizedFileName = sinon.stub().returns('sample');
 
             const service = new OembedService({
@@ -277,30 +279,100 @@ describe('oembed-service', function () {
                     getStorage() {
                         return {
                             getSanitizedFileName,
-                            generateUnique,
                             saveRaw
                         };
                     }
                 },
                 externalRequest() {
                     return {
-                        buffer: async () => Buffer.from('img-bytes')
+                        buffer: async () => imageBytes
                     };
                 }
             });
 
             const storedUrl = await service.processImageFromUrl('https://example.com/sample.png?token=abc', 'thumbnail');
 
-            assert.equal(storedUrl, 'https://storage.ghost.is/c/6f/a3/site/content/images/thumbnail/sample.png');
+            // the adapter's own return value is passed straight through
+            assert.equal(storedUrl, 'https://storage.ghost.is/c/6f/a3/site/content/images/thumbnail/sample-x.png');
             sinon.assert.calledOnce(getSanitizedFileName);
-            sinon.assert.calledOnce(generateUnique);
             sinon.assert.calledOnce(saveRaw);
-            assert.equal(saveRaw.firstCall.args[1], 'thumbnail/sample.png');
+            assert.match(saveRaw.firstCall.args[1], new RegExp(`^thumbnail/sample-${UUID_RE.source}\\.png$`));
         });
 
-        it('works when saveRaw returns a relative path (local storage)', async function () {
-            const saveRaw = sinon.stub().resolves('/content/images/icon/favicon.ico');
-            const generateUnique = sinon.stub().resolves('/tmp/content/images/icon/favicon.ico');
+        it('writes a fresh key on every call, even for identical bytes (ONC-1788)', async function () {
+            // A content hash would collide here and force an overwrite, which the
+            // production bucket rejects. A unique key avoids the overwrite entirely.
+            const imageBytes = Buffer.from('ico-bytes');
+            const saveRaw = sinon.stub().resolves('/stored');
+            const getSanitizedFileName = sinon.stub().returns('favicon');
+
+            const service = new OembedService({
+                config: {
+                    getContentPath() {
+                        return '/tmp/content/images';
+                    }
+                },
+                storage: {
+                    getStorage() {
+                        return {
+                            getSanitizedFileName,
+                            saveRaw
+                        };
+                    }
+                },
+                externalRequest() {
+                    return {
+                        buffer: async () => imageBytes
+                    };
+                }
+            });
+
+            await service.processImageFromUrl('https://a.example.com/favicon.ico', 'icon');
+            await service.processImageFromUrl('https://b.example.com/favicon.ico', 'icon');
+
+            assert.match(saveRaw.firstCall.args[1], new RegExp(`^icon/favicon-${UUID_RE.source}\\.ico$`));
+            assert.match(saveRaw.secondCall.args[1], new RegExp(`^icon/favicon-${UUID_RE.source}\\.ico$`));
+            assert.notEqual(saveRaw.firstCall.args[1], saveRaw.secondCall.args[1]);
+        });
+
+        it('only ever creates - never probes exists or attempts a second write', async function () {
+            // The no-overwrite property: unique keys mean we always create and
+            // never need to check-for or replace an existing object.
+            const saveRaw = sinon.stub().resolves('/stored');
+            const exists = sinon.stub().resolves(true);
+            const getSanitizedFileName = sinon.stub().returns('favicon');
+
+            const service = new OembedService({
+                config: {
+                    getContentPath() {
+                        return '/tmp/content/images';
+                    }
+                },
+                storage: {
+                    getStorage() {
+                        return {
+                            getSanitizedFileName,
+                            saveRaw,
+                            exists
+                        };
+                    }
+                },
+                externalRequest() {
+                    return {
+                        buffer: async () => Buffer.from('bytes')
+                    };
+                }
+            });
+
+            await service.processImageFromUrl('https://example.com/favicon.png', 'icon');
+
+            sinon.assert.calledOnce(saveRaw);
+            sinon.assert.notCalled(exists);
+        });
+
+        it('does not call generateUnique (no per-write storage walk)', async function () {
+            const generateUnique = sinon.stub().resolves('/should/not/be/called.png');
+            const saveRaw = sinon.stub().resolves('/stored');
             const getSanitizedFileName = sinon.stub().returns('favicon');
 
             const service = new OembedService({
@@ -320,15 +392,14 @@ describe('oembed-service', function () {
                 },
                 externalRequest() {
                     return {
-                        buffer: async () => Buffer.from('ico-bytes')
+                        buffer: async () => Buffer.from('bytes')
                     };
                 }
             });
 
-            const storedUrl = await service.processImageFromUrl('https://example.com/favicon.ico', 'icon');
+            await service.processImageFromUrl('https://example.com/favicon.png', 'icon');
 
-            assert.equal(storedUrl, '/content/images/icon/favicon.ico');
-            assert.equal(saveRaw.firstCall.args[1], 'icon/favicon.ico');
+            sinon.assert.notCalled(generateUnique);
         });
 
         it('throws when storage lacks saveRaw', async function () {
@@ -341,8 +412,7 @@ describe('oembed-service', function () {
                 storage: {
                     getStorage() {
                         return {
-                            getSanitizedFileName: sinon.stub().returns('sample'),
-                            generateUnique: sinon.stub().resolves('/tmp/sample.png')
+                            getSanitizedFileName: sinon.stub().returns('sample')
                         };
                     }
                 },
@@ -370,7 +440,6 @@ describe('oembed-service', function () {
                     getStorage() {
                         return {
                             getSanitizedFileName: sinon.stub().returns('sample'),
-                            generateUnique: sinon.stub().resolves('/tmp/sample.png'),
                             saveRaw: sinon.stub().resolves('/stored')
                         };
                     }

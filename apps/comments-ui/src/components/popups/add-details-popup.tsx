@@ -98,7 +98,7 @@ const AddDetailsPopup = (props: Props) => {
                     appear
                 >
                     <div className="flex flex-row items-center justify-start gap-3 pr-4">
-                        <div className="size-10 flex-none rounded-full border-2 border-white bg-[#0C313B] bg-cover bg-no-repeat" style={{backgroundImage: `url(${profile.avatar})`}} />
+                        <div className="size-10 shrink-0 rounded-full border-2 border-white bg-[#0C313B] bg-cover bg-no-repeat" style={{backgroundImage: `url(${profile.avatar})`}} />
                         <div className="flex min-w-0 flex-col items-start justify-center">
                             <div className="flex font-sans text-base font-semibold tracking-tight text-white">
                                 {profile.name} {profile.isPlus && <PlusBadge />}
